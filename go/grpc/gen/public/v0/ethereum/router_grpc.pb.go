@@ -45,6 +45,7 @@ const (
 	PhoenixService_ELTriggerableWithdrawal_FullMethodName = "/public.v0.ethereum.PhoenixService/ELTriggerableWithdrawal"
 	PhoenixService_Topup_FullMethodName                   = "/public.v0.ethereum.PhoenixService/Topup"
 	PhoenixService_ListWithdrawals_FullMethodName         = "/public.v0.ethereum.PhoenixService/ListWithdrawals"
+	PhoenixService_UpdateFeeRecipient_FullMethodName      = "/public.v0.ethereum.PhoenixService/UpdateFeeRecipient"
 )
 
 // PhoenixServiceClient is the client API for PhoenixService service.
@@ -120,6 +121,12 @@ type PhoenixServiceClient interface {
 	// scoped to the caller's validators — no Blueshift call. The body maps to
 	// the `filter` field; page/size are query parameters.
 	ListWithdrawals(ctx context.Context, in *ListWithdrawalsRequest, opts ...grpc.CallOption) (*ListWithdrawalsResponse, error)
+	// UpdateFeeRecipient updates validator fee-recipient addresses. Mirrors
+	// POST /v1/ethereum/validators/update-fee-recipient on BS. Synchronous:
+	// routes the update through the Staking Engine and returns the completed
+	// operation (per-validator results) inline in a single response — no
+	// polling, matching Blueshift's fee-recipient contract.
+	UpdateFeeRecipient(ctx context.Context, in *UpdateFeeRecipientRequest, opts ...grpc.CallOption) (*UpdateFeeRecipientResponse, error)
 }
 
 type phoenixServiceClient struct {
@@ -260,6 +267,16 @@ func (c *phoenixServiceClient) ListWithdrawals(ctx context.Context, in *ListWith
 	return out, nil
 }
 
+func (c *phoenixServiceClient) UpdateFeeRecipient(ctx context.Context, in *UpdateFeeRecipientRequest, opts ...grpc.CallOption) (*UpdateFeeRecipientResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateFeeRecipientResponse)
+	err := c.cc.Invoke(ctx, PhoenixService_UpdateFeeRecipient_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PhoenixServiceServer is the server API for PhoenixService service.
 // All implementations must embed UnimplementedPhoenixServiceServer
 // for forward compatibility.
@@ -333,6 +350,12 @@ type PhoenixServiceServer interface {
 	// scoped to the caller's validators — no Blueshift call. The body maps to
 	// the `filter` field; page/size are query parameters.
 	ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error)
+	// UpdateFeeRecipient updates validator fee-recipient addresses. Mirrors
+	// POST /v1/ethereum/validators/update-fee-recipient on BS. Synchronous:
+	// routes the update through the Staking Engine and returns the completed
+	// operation (per-validator results) inline in a single response — no
+	// polling, matching Blueshift's fee-recipient contract.
+	UpdateFeeRecipient(context.Context, *UpdateFeeRecipientRequest) (*UpdateFeeRecipientResponse, error)
 	mustEmbedUnimplementedPhoenixServiceServer()
 }
 
@@ -381,6 +404,9 @@ func (UnimplementedPhoenixServiceServer) Topup(context.Context, *TopupRequest) (
 }
 func (UnimplementedPhoenixServiceServer) ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListWithdrawals not implemented")
+}
+func (UnimplementedPhoenixServiceServer) UpdateFeeRecipient(context.Context, *UpdateFeeRecipientRequest) (*UpdateFeeRecipientResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateFeeRecipient not implemented")
 }
 func (UnimplementedPhoenixServiceServer) mustEmbedUnimplementedPhoenixServiceServer() {}
 func (UnimplementedPhoenixServiceServer) testEmbeddedByValue()                        {}
@@ -637,6 +663,24 @@ func _PhoenixService_ListWithdrawals_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PhoenixService_UpdateFeeRecipient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFeeRecipientRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PhoenixServiceServer).UpdateFeeRecipient(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PhoenixService_UpdateFeeRecipient_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PhoenixServiceServer).UpdateFeeRecipient(ctx, req.(*UpdateFeeRecipientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PhoenixService_ServiceDesc is the grpc.ServiceDesc for PhoenixService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -695,6 +739,10 @@ var PhoenixService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListWithdrawals",
 			Handler:    _PhoenixService_ListWithdrawals_Handler,
+		},
+		{
+			MethodName: "UpdateFeeRecipient",
+			Handler:    _PhoenixService_UpdateFeeRecipient_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
