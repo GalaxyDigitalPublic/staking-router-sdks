@@ -21,7 +21,6 @@ import (
 	ethereumv1 "github.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc/gen/public/ethereum/v1"
 	ethlinkv1 "github.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc/gen/public/ethlink/v1"
 	solanav1 "github.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc/gen/public/solana/v1"
-	phoenixv0 "github.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc/gen/public/v0/ethereum"
 	publicv1 "github.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc/gen/public/v1"
 )
 
@@ -40,8 +39,6 @@ type Client struct {
 	Webhooks publicv1.WebhookServiceClient
 	// EthLink is the eth-link API (EthLinkService).
 	EthLink ethlinkv1.EthLinkServiceClient
-	// Phoenix is the legacy v0 Ethereum API (PhoenixService).
-	Phoenix phoenixv0.PhoenixServiceClient
 }
 
 // config holds resolved dial options. Mutated only through Option funcs.
@@ -145,7 +142,6 @@ func New(addr string, opts ...Option) (*Client, error) {
 		Solana:   solanav1.NewSolanaStakingRouterServiceClient(conn),
 		Webhooks: publicv1.NewWebhookServiceClient(conn),
 		EthLink:  ethlinkv1.NewEthLinkServiceClient(conn),
-		Phoenix:  phoenixv0.NewPhoenixServiceClient(conn),
 	}, nil
 }
 
