@@ -51,4 +51,4 @@ Resolved via `go/grpc/vX.Y.Z` tags.
 
 Both SDKs track the Staking Router version they were generated from.
 
-Current version: `main-795805f`
+Current version: `main-1991cbd`
