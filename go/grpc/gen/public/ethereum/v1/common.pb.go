@@ -308,10 +308,14 @@ const (
 	ErrorCode_INVALID_WEBHOOK_SECRET     ErrorCode = 37
 	ErrorCode_INVALID_WEBHOOK_EVENT_TYPE ErrorCode = 38
 	// State/Conflict Errors (409, 422)
-	ErrorCode_VALIDATOR_NOT_ACTIVE                ErrorCode = 40
-	ErrorCode_VALIDATOR_ALREADY_EXITING           ErrorCode = 41
-	ErrorCode_VALIDATOR_ALREADY_EXITED            ErrorCode = 42
-	ErrorCode_VALIDATOR_NOT_EXITED                ErrorCode = 43
+	ErrorCode_VALIDATOR_NOT_ACTIVE      ErrorCode = 40
+	ErrorCode_VALIDATOR_ALREADY_EXITING ErrorCode = 41
+	ErrorCode_VALIDATOR_ALREADY_EXITED  ErrorCode = 42
+	ErrorCode_VALIDATOR_NOT_EXITED      ErrorCode = 43
+	// VALIDATOR_WILL_EXIT is grouped here with the other validator
+	// state errors, but its numeric value is 54 (the next free slot
+	// after INVALID_ROLLUP_TYPE below) since 44-53 are already taken.
+	ErrorCode_VALIDATOR_WILL_EXIT                 ErrorCode = 54
 	ErrorCode_OPERATION_ALREADY_EXISTS            ErrorCode = 44
 	ErrorCode_OPERATION_IN_PROGRESS               ErrorCode = 45
 	ErrorCode_INSUFFICIENT_BALANCE                ErrorCode = 46
@@ -391,6 +395,7 @@ var (
 		41: "VALIDATOR_ALREADY_EXITING",
 		42: "VALIDATOR_ALREADY_EXITED",
 		43: "VALIDATOR_NOT_EXITED",
+		54: "VALIDATOR_WILL_EXIT",
 		44: "OPERATION_ALREADY_EXISTS",
 		45: "OPERATION_IN_PROGRESS",
 		46: "INSUFFICIENT_BALANCE",
@@ -454,6 +459,7 @@ var (
 		"VALIDATOR_ALREADY_EXITING":           41,
 		"VALIDATOR_ALREADY_EXITED":            42,
 		"VALIDATOR_NOT_EXITED":                43,
+		"VALIDATOR_WILL_EXIT":                 54,
 		"OPERATION_ALREADY_EXISTS":            44,
 		"OPERATION_IN_PROGRESS":               45,
 		"INSUFFICIENT_BALANCE":                46,
@@ -678,7 +684,7 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"\x06EXITED\x10\x06\x12\r\n" +
 	"\tWITHDRAWN\x10\a\x12\v\n" +
-	"\aSLASHED\x10\b*\xe4\f\n" +
+	"\aSLASHED\x10\b*\xfd\f\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16UNSPECIFIED_ERROR_CODE\x10\x00\x12\x12\n" +
 	"\x0eINVALID_PUBKEY\x10\x01\x12\x13\n" +
@@ -717,7 +723,8 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\x14VALIDATOR_NOT_ACTIVE\x10(\x12\x1d\n" +
 	"\x19VALIDATOR_ALREADY_EXITING\x10)\x12\x1c\n" +
 	"\x18VALIDATOR_ALREADY_EXITED\x10*\x12\x18\n" +
-	"\x14VALIDATOR_NOT_EXITED\x10+\x12\x1c\n" +
+	"\x14VALIDATOR_NOT_EXITED\x10+\x12\x17\n" +
+	"\x13VALIDATOR_WILL_EXIT\x106\x12\x1c\n" +
 	"\x18OPERATION_ALREADY_EXISTS\x10,\x12\x19\n" +
 	"\x15OPERATION_IN_PROGRESS\x10-\x12\x18\n" +
 	"\x14INSUFFICIENT_BALANCE\x10.\x12#\n" +
