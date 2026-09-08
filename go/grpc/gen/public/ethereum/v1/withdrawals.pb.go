@@ -28,8 +28,6 @@ type ListWithdrawalsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Filter by validator public keys (max 50).
 	Pubkeys []string `protobuf:"bytes,1,rep,name=pubkeys,proto3" json:"pubkeys,omitempty"`
-	// Filter by withdrawal address.
-	WithdrawalAddress string `protobuf:"bytes,2,opt,name=withdrawal_address,json=withdrawalAddress,proto3" json:"withdrawal_address,omitempty"`
 	// Filter by start epoch (optional, allows epoch 0).
 	StartEpoch *uint64 `protobuf:"varint,3,opt,name=start_epoch,json=startEpoch,proto3,oneof" json:"start_epoch,omitempty"`
 	// Filter by end epoch (optional, allows epoch 0).
@@ -81,13 +79,6 @@ func (x *ListWithdrawalsRequest) GetPubkeys() []string {
 		return x.Pubkeys
 	}
 	return nil
-}
-
-func (x *ListWithdrawalsRequest) GetWithdrawalAddress() string {
-	if x != nil {
-		return x.WithdrawalAddress
-	}
-	return ""
 }
 
 func (x *ListWithdrawalsRequest) GetStartEpoch() uint64 {
@@ -319,10 +310,9 @@ var File_public_ethereum_v1_withdrawals_proto protoreflect.FileDescriptor
 
 const file_public_ethereum_v1_withdrawals_proto_rawDesc = "" +
 	"\n" +
-	"$public/ethereum/v1/withdrawals.proto\x12\x12public.ethereum.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\x89\x04\n" +
+	"$public/ethereum/v1/withdrawals.proto\x12\x12public.ethereum.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\xc1\x03\n" +
 	"\x16ListWithdrawalsRequest\x12\x18\n" +
-	"\apubkeys\x18\x01 \x03(\tR\apubkeys\x12`\n" +
-	"\x12withdrawal_address\x18\x02 \x01(\tB1\x92A.J,\"0x71C7656EC7ab88b098defB751B7401B5f6d8976F\"R\x11withdrawalAddress\x121\n" +
+	"\apubkeys\x18\x01 \x03(\tR\apubkeys\x121\n" +
 	"\vstart_epoch\x18\x03 \x01(\x04B\v\x92A\bJ\x06300000H\x00R\n" +
 	"startEpoch\x88\x01\x01\x12-\n" +
 	"\tend_epoch\x18\x04 \x01(\x04B\v\x92A\bJ\x06301000H\x01R\bendEpoch\x88\x01\x01\x120\n" +
@@ -335,7 +325,7 @@ const file_public_ethereum_v1_withdrawals_proto_rawDesc = "" +
 	"G*\x16ListWithdrawalsRequest2-Request to list historical withdrawal events.B\x0e\n" +
 	"\f_start_epochB\f\n" +
 	"\n" +
-	"_end_epoch\"\x95\x01\n" +
+	"_end_epochJ\x04\b\x02\x10\x03R\x12withdrawal_address\"\x95\x01\n" +
 	"\x17ListWithdrawalsResponse\x12@\n" +
 	"\vwithdrawals\x18\x01 \x03(\v2\x1e.public.ethereum.v1.WithdrawalR\vwithdrawals\x128\n" +
 	"\bmetadata\x18\x02 \x01(\v2\x1c.public.ethereum.v1.PageInfoR\bmetadata\"\xd0\x04\n" +
