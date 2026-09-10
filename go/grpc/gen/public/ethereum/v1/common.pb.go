@@ -324,6 +324,7 @@ const (
 	ErrorCode_INCOMPATIBLE_WITHDRAWAL_CREDENTIALS ErrorCode = 49
 	ErrorCode_OPERATION_NOT_CANCELLABLE           ErrorCode = 50
 	ErrorCode_DUPLICATE_PUBKEYS                   ErrorCode = 51
+	ErrorCode_PUBKEY_ALREADY_REGISTERED           ErrorCode = 55
 	// INVALID_REGION is a validation-class error (SR maps it to
 	// codes.InvalidArgument / HTTP 400 in the presenter), but its
 	// numeric value lives here at 52 to keep the source of truth for
@@ -404,6 +405,7 @@ var (
 		49: "INCOMPATIBLE_WITHDRAWAL_CREDENTIALS",
 		50: "OPERATION_NOT_CANCELLABLE",
 		51: "DUPLICATE_PUBKEYS",
+		55: "PUBKEY_ALREADY_REGISTERED",
 		52: "INVALID_REGION",
 		53: "INVALID_ROLLUP_TYPE",
 		60: "FEATURE_NOT_SUPPORTED",
@@ -468,6 +470,7 @@ var (
 		"INCOMPATIBLE_WITHDRAWAL_CREDENTIALS": 49,
 		"OPERATION_NOT_CANCELLABLE":           50,
 		"DUPLICATE_PUBKEYS":                   51,
+		"PUBKEY_ALREADY_REGISTERED":           55,
 		"INVALID_REGION":                      52,
 		"INVALID_ROLLUP_TYPE":                 53,
 		"FEATURE_NOT_SUPPORTED":               60,
@@ -684,7 +687,7 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"\x06EXITED\x10\x06\x12\r\n" +
 	"\tWITHDRAWN\x10\a\x12\v\n" +
-	"\aSLASHED\x10\b*\xfd\f\n" +
+	"\aSLASHED\x10\b*\x9c\r\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16UNSPECIFIED_ERROR_CODE\x10\x00\x12\x12\n" +
 	"\x0eINVALID_PUBKEY\x10\x01\x12\x13\n" +
@@ -732,7 +735,8 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\x1cCONSOLIDATION_SAME_VALIDATOR\x100\x12'\n" +
 	"#INCOMPATIBLE_WITHDRAWAL_CREDENTIALS\x101\x12\x1d\n" +
 	"\x19OPERATION_NOT_CANCELLABLE\x102\x12\x15\n" +
-	"\x11DUPLICATE_PUBKEYS\x103\x12\x12\n" +
+	"\x11DUPLICATE_PUBKEYS\x103\x12\x1d\n" +
+	"\x19PUBKEY_ALREADY_REGISTERED\x107\x12\x12\n" +
 	"\x0eINVALID_REGION\x104\x12\x17\n" +
 	"\x13INVALID_ROLLUP_TYPE\x105\x12\x19\n" +
 	"\x15FEATURE_NOT_SUPPORTED\x10<\x12&\n" +
