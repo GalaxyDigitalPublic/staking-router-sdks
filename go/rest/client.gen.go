@@ -435,7 +435,10 @@ type ExitOperationData struct {
 //
 // Provide either `pubkeys` or `withdrawal_address` (or both) to identify validators.
 type ExitPreSignedRequest struct {
-	// ClientRequestId Client-provided request ID for idempotency.
+	// ClientRequestId Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `json:"client_request_id"`
 
 	// Pubkeys Validator public keys. Provide pubkeys or withdrawal_address (or both).
@@ -455,7 +458,10 @@ type ExitPreSignedResponse struct {
 
 // ExitRequest Request to initiate a CL voluntary exit.
 type ExitRequest struct {
-	// ClientRequestId Client-provided request ID for idempotency.
+	// ClientRequestId Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `json:"client_request_id"`
 
 	// Validators Validators to exit. Each can be identified by pubkey OR validator_index.
@@ -798,9 +804,6 @@ type ListWithdrawalsRequest struct {
 
 	// StartEpoch Filter by start epoch (optional, allows epoch 0).
 	StartEpoch *string `json:"start_epoch,omitempty"`
-
-	// WithdrawalAddress Filter by withdrawal address.
-	WithdrawalAddress *string `json:"withdrawal_address,omitempty"`
 }
 
 // ListWithdrawalsResponse ListWithdrawalsResponse is the response containing withdrawals.
@@ -942,7 +945,10 @@ type ProvisionRequest struct {
 	// Length must equal validator_count if provided.
 	AmountsGwei *[]string `json:"amounts_gwei,omitempty"`
 
-	// ClientRequestId Client-provided request ID for idempotency (UUID v4 recommended).
+	// ClientRequestId Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `json:"client_request_id"`
 
 	// CoinbaseParams CoinbaseProvisionParams holds Coinbase-specific provision parameters.
@@ -1164,7 +1170,10 @@ type UnsignedTransactionPayload struct {
 
 // UpdateFeeRecipientRequest Request to update fee recipient addresses for validators.
 type UpdateFeeRecipientRequest struct {
-	// ClientRequestId Client-provided request ID for idempotency.
+	// ClientRequestId Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `json:"client_request_id"`
 
 	// Validators Validators to update.
@@ -6570,6 +6579,7 @@ type StakingRouterServiceExitResponse struct {
 	JSON202      *interface{}
 	JSON400      *interface{}
 	JSON404      *interface{}
+	JSON409      *interface{}
 	JSON422      *interface{}
 }
 
@@ -6594,6 +6604,7 @@ type StakingRouterServiceExitPreSignedResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ExitPreSignedResponse
 	JSON202      *interface{}
+	JSON409      *interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -6617,6 +6628,7 @@ type StakingRouterServiceUpdateFeeRecipientResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *UpdateFeeRecipientResponse
 	JSON202      *interface{}
+	JSON409      *interface{}
 	JSON501      *interface{}
 }
 
@@ -8220,6 +8232,13 @@ func ParseStakingRouterServiceExitResponse(rsp *http.Response) (*StakingRouterSe
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest interface{}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -8260,6 +8279,13 @@ func ParseStakingRouterServiceExitPreSignedResponse(rsp *http.Response) (*Stakin
 		}
 		response.JSON202 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	}
 
 	return response, nil
@@ -8292,6 +8318,13 @@ func ParseStakingRouterServiceUpdateFeeRecipientResponse(rsp *http.Response) (*S
 			return nil, err
 		}
 		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
 		var dest interface{}

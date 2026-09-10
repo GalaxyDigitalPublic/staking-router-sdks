@@ -994,7 +994,7 @@
     "/v1/ethereum/validators/exit": {
       "post": {
         "summary": "Exit validators (CL)",
-        "description": "Initiate a voluntary exit via the consensus layer.\n\nThe node operator will broadcast the signed exit message to the beacon chain.\nEach validator can be identified by `pubkey` OR `validator_index`.\nPoll `GET /ethereum/operations/{id}` for status updates.",
+        "description": "Initiate a voluntary exit via the consensus layer.\n\nThe node operator will broadcast the signed exit message to the beacon chain.\nEach validator can be identified by `pubkey` OR `validator_index`.\nPoll `GET /ethereum/operations/{id}` for status updates.\n\n**Idempotency.** `client_request_id` is unique per organisation across all operation\ntypes. Repeating a request with the same `client_request_id` **and the same parameters**\nreturns the existing operation with HTTP 200 \u2014 safe to retry after a network failure or\ntimeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\nParameter comparison ignores hex letter-case and the optional `0x` prefix on pubkeys and\naddresses, and ignores the order of repeated validator entries (`amounts_gwei` is\norder-sensitive, since each element is a specific validator's stake). A replayed response\ncarries the operation in its current state; poll `GET /ethereum/operations/{id}` for\nartifacts.",
         "operationId": "StakingRouterService_Exit",
         "responses": {
           "200": {
@@ -1066,6 +1066,28 @@
               }
             }
           },
+          "409": {
+            "description": "Idempotency conflict - same client_request_id with different parameters",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "OPERATION_ALREADY_EXISTS",
+                        "message": "operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62",
+                        "details": {
+                          "client_request_id": "49bf80cb-c7ca-4082-a526-8afab545cc62",
+                          "reason": "payload differs"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validator in wrong state",
             "content": {
@@ -1108,7 +1130,7 @@
     "/v1/ethereum/validators/exit/pre-signed": {
       "post": {
         "summary": "Get pre-signed exit messages",
-        "description": "Request pre-signed voluntary exit messages from the node operator.\n\nUnlike `/exit`, this returns the signed message for the client to broadcast.\nUseful when client wants control over exit timing or beacon node selection.",
+        "description": "Request pre-signed voluntary exit messages from the node operator.\n\nUnlike `/exit`, this returns the signed message for the client to broadcast.\nUseful when client wants control over exit timing or beacon node selection.\n\n**Idempotency.** `client_request_id` is unique per organisation across all operation\ntypes. Repeating a request with the same `client_request_id` **and the same parameters**\nreturns the existing operation with HTTP 200 \u2014 safe to retry after a network failure or\ntimeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\nParameter comparison ignores hex letter-case and the optional `0x` prefix on pubkeys and\naddresses, and ignores the order of repeated validator entries (`amounts_gwei` is\norder-sensitive, since each element is a specific validator's stake). A replayed response\ncarries the operation in its current state; poll `GET /ethereum/operations/{id}` for\nartifacts.",
         "operationId": "StakingRouterService_ExitPreSigned",
         "responses": {
           "200": {
@@ -1140,6 +1162,28 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Idempotency conflict - same client_request_id with different parameters",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "OPERATION_ALREADY_EXISTS",
+                        "message": "operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62",
+                        "details": {
+                          "client_request_id": "49bf80cb-c7ca-4082-a526-8afab545cc62",
+                          "reason": "payload differs"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -1161,7 +1205,7 @@
     "/v1/ethereum/validators/fee-recipient": {
       "put": {
         "summary": "Update fee recipient",
-        "description": "Update fee recipient address for validators.\n\n**Note:** Currently only supported by Galaxy operator.\nRequires node operator to update proposer settings (BLS signed).",
+        "description": "Update fee recipient address for validators.\n\n**Note:** Currently only supported by Galaxy operator.\nRequires node operator to update proposer settings (BLS signed).\n\n**Idempotency.** `client_request_id` is unique per organisation across all operation\ntypes. Repeating a request with the same `client_request_id` **and the same parameters**\nreturns the existing operation with HTTP 200 \u2014 safe to retry after a network failure or\ntimeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\nParameter comparison ignores hex letter-case and the optional `0x` prefix on pubkeys and\naddresses, and ignores the order of repeated validator entries (`amounts_gwei` is\norder-sensitive, since each element is a specific validator's stake). A replayed response\ncarries the operation in its current state; poll `GET /ethereum/operations/{id}` for\nartifacts.",
         "operationId": "StakingRouterService_UpdateFeeRecipient",
         "responses": {
           "200": {
@@ -1187,6 +1231,28 @@
                         "type": "FEE_RECIPIENT_UPDATE",
                         "status": "PROCESSING",
                         "created_at": "2026-02-05T10:00:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Idempotency conflict - same client_request_id with different parameters",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "OPERATION_ALREADY_EXISTS",
+                        "message": "operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62",
+                        "details": {
+                          "client_request_id": "49bf80cb-c7ca-4082-a526-8afab545cc62",
+                          "reason": "payload differs"
+                        }
                       }
                     }
                   }
@@ -1235,7 +1301,7 @@
     "/v1/ethereum/validators/provision": {
       "post": {
         "summary": "Provision validators",
-        "description": "Request provisioning of new validators via a node operator.\n\nReturns an operation ID for polling. Poll `GET /ethereum/operations/{id}` until status is SUCCEEDED.\nUpon completion, artifacts will contain deposit data for each validator.",
+        "description": "Request provisioning of new validators via a node operator.\n\nReturns an operation ID for polling. Poll `GET /ethereum/operations/{id}` until status is SUCCEEDED.\nUpon completion, artifacts will contain deposit data for each validator.\n\n**Idempotency.** `client_request_id` is unique per organisation across all operation\ntypes. Repeating a request with the same `client_request_id` **and the same parameters**\nreturns the existing operation with HTTP 200 \u2014 safe to retry after a network failure or\ntimeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\nParameter comparison ignores hex letter-case and the optional `0x` prefix on pubkeys and\naddresses, and ignores the order of repeated validator entries (`amounts_gwei` is\norder-sensitive, since each element is a specific validator's stake). A replayed response\ncarries the operation in its current state; poll `GET /ethereum/operations/{id}` for\nartifacts.",
         "operationId": "StakingRouterService_Provision",
         "responses": {
           "200": {
@@ -1299,9 +1365,10 @@
                     "value": {
                       "error": {
                         "code": "OPERATION_ALREADY_EXISTS",
-                        "message": "Request with this client_request_id already exists with different parameters",
+                        "message": "operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62",
                         "details": {
-                          "client_request_id": "49bf80cb-c7ca-4082-a526-8afab545cc62"
+                          "client_request_id": "49bf80cb-c7ca-4082-a526-8afab545cc62",
+                          "reason": "payload differs"
                         }
                       }
                     }
@@ -3113,7 +3180,7 @@
         "properties": {
           "client_request_id": {
             "type": "string",
-            "description": "Client-provided request ID for idempotency."
+            "description": "Client-provided idempotency key, unique per organisation across all operation types.\n1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but\nnot required. Reusing it with identical parameters replays the stored operation;\nreusing it with different parameters returns 409. See the endpoint description."
           },
           "pubkeys": {
             "type": "array",
@@ -3147,7 +3214,7 @@
         "properties": {
           "client_request_id": {
             "type": "string",
-            "description": "Client-provided request ID for idempotency."
+            "description": "Client-provided idempotency key, unique per organisation across all operation types.\n1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but\nnot required. Reusing it with identical parameters replays the stored operation;\nreusing it with different parameters returns 409. See the endpoint description."
           },
           "validators": {
             "type": "array",
@@ -3682,11 +3749,6 @@
             },
             "description": "Filter by validator public keys (max 50)."
           },
-          "withdrawal_address": {
-            "type": "string",
-            "example": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-            "description": "Filter by withdrawal address."
-          },
           "start_epoch": {
             "type": "string",
             "format": "uint64",
@@ -3931,7 +3993,7 @@
         "properties": {
           "client_request_id": {
             "type": "string",
-            "description": "Client-provided request ID for idempotency (UUID v4 recommended)."
+            "description": "Client-provided idempotency key, unique per organisation across all operation types.\n1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but\nnot required. Reusing it with identical parameters replays the stored operation;\nreusing it with different parameters returns 409. See the endpoint description."
           },
           "operator": {
             "type": "string",
@@ -4251,7 +4313,7 @@
         "properties": {
           "client_request_id": {
             "type": "string",
-            "description": "Client-provided request ID for idempotency."
+            "description": "Client-provided idempotency key, unique per organisation across all operation types.\n1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but\nnot required. Reusing it with identical parameters replays the stored operation;\nreusing it with different parameters returns 409. See the endpoint description."
           },
           "validators": {
             "type": "array",

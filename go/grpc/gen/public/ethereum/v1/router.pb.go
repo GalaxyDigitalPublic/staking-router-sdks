@@ -26,7 +26,10 @@ const (
 // ProvisionRequest is the request for provisioning validators.
 type ProvisionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Client-provided request ID for idempotency (UUID v4 recommended).
+	// Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `protobuf:"bytes,1,opt,name=client_request_id,json=clientRequestId,proto3" json:"client_request_id,omitempty"`
 	// Node operator to use (e.g., "galaxy", "figment").
 	Operator string `protobuf:"bytes,2,opt,name=operator,proto3" json:"operator,omitempty"`
@@ -240,7 +243,10 @@ func (x *ProvisionResponse) GetOperation() *Operation {
 // ExitRequest is the request for initiating a CL exit.
 type ExitRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Client-provided request ID for idempotency.
+	// Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `protobuf:"bytes,1,opt,name=client_request_id,json=clientRequestId,proto3" json:"client_request_id,omitempty"`
 	// Validators to exit. Each can be identified by pubkey OR validator_index.
 	Validators    []*ExitValidator `protobuf:"bytes,2,rep,name=validators,proto3" json:"validators,omitempty"`
@@ -438,7 +444,10 @@ func (x *ExitResponse) GetOperation() *Operation {
 // ExitPreSignedRequest is the request for pre-signed exit messages.
 type ExitPreSignedRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Client-provided request ID for idempotency.
+	// Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `protobuf:"bytes,1,opt,name=client_request_id,json=clientRequestId,proto3" json:"client_request_id,omitempty"`
 	// Validator public keys. Provide pubkeys or withdrawal_address (or both).
 	// If both are provided, validators must match both filters (intersection).
@@ -550,7 +559,10 @@ func (x *ExitPreSignedResponse) GetOperation() *Operation {
 // UpdateFeeRecipientRequest is the request for updating fee recipients.
 type UpdateFeeRecipientRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Client-provided request ID for idempotency.
+	// Client-provided idempotency key, unique per organisation across all operation types.
+	// 1-128 characters matching `[a-zA-Z0-9][a-zA-Z0-9._-]*`; a UUID v4 is recommended but
+	// not required. Reusing it with identical parameters replays the stored operation;
+	// reusing it with different parameters returns 409. See the endpoint description.
 	ClientRequestId string `protobuf:"bytes,1,opt,name=client_request_id,json=clientRequestId,proto3" json:"client_request_id,omitempty"`
 	// Validators to update.
 	Validators    []*FeeRecipientUpdate `protobuf:"bytes,2,rep,name=validators,proto3" json:"validators,omitempty"`
@@ -757,7 +769,7 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x06pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x06pubkey\x127\n" +
 	"\x15fee_recipient_address\x18\x02 \x01(\tB\x03\xe0A\x02R\x13feeRecipientAddress\"Y\n" +
 	"\x1aUpdateFeeRecipientResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\x90{\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2š\x01\n" +
 	"\x14StakingRouterService\x12\x9d\x05\n" +
 	"\fGetOperation\x12'.public.ethereum.v1.GetOperationRequest\x1a(.public.ethereum.v1.GetOperationResponse\"\xb9\x04\x92A\x91\x04\n" +
 	"\n" +
@@ -818,34 +830,61 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"This endpoint reads from the Staking Router database - no node operator call is made.J\xd1\x01\n" +
 	"\x03200\x12\xc9\x01\n" +
 	"%Exit artifacts retrieved successfully\"\x9f\x01\n" +
-	"\x10application/json\x12\x8a\x01{\"artifacts\":[{\"pubkey\":\"0x8a2f5c3b...\",\"encrypted_exit_message\":\"aGVsbG8gd29ybGQ=\",\"validator_index\":12345,\"fork_version\":\"0x00000000\"}]}\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/ethereum/validators/artifacts/exit\x12\xf4\v\n" +
-	"\tProvision\x12$.public.ethereum.v1.ProvisionRequest\x1a%.public.ethereum.v1.ProvisionResponse\"\x99\v\x92A\xe9\n" +
-	"\n" +
-	"\x10Ethereum Actions\x12\x14Provision validators\x1a\xea\x01Request provisioning of new validators via a node operator.\n" +
+	"\x10application/json\x12\x8a\x01{\"artifacts\":[{\"pubkey\":\"0x8a2f5c3b...\",\"encrypted_exit_message\":\"aGVsbG8gd29ybGQ=\",\"validator_index\":12345,\"fork_version\":\"0x00000000\"}]}\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/ethereum/validators/artifacts/exit\x12\xe8\x14\n" +
+	"\tProvision\x12$.public.ethereum.v1.ProvisionRequest\x1a%.public.ethereum.v1.ProvisionResponse\"\x8d\x14\x92A\xdd\x13\n" +
+	"\x10Ethereum Actions\x12\x14Provision validators\x1a\xba\n" +
+	"Request provisioning of new validators via a node operator.\n" +
 	"\n" +
 	"Returns an operation ID for polling. Poll `GET /ethereum/operations/{id}` until status is SUCCEEDED.\n" +
-	"Upon completion, artifacts will contain deposit data for each validator.J\xac\x01\n" +
+	"Upon completion, artifacts will contain deposit data for each validator.\n" +
+	"\n" +
+	"**Idempotency.** `client_request_id` is unique per organisation across all operation\n" +
+	"types. Repeating a request with the same `client_request_id` **and the same parameters**\n" +
+	"returns the existing operation with HTTP 200 — safe to retry after a network failure or\n" +
+	"timeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\n" +
+	"Parameter comparison ignores hex letter-case and the optional `0x` prefix on the\n" +
+	"withdrawal, fee-recipient and funding addresses, and treats an omitted `amounts_gwei`\n" +
+	"as its documented default, so omitting it and sending the default explicitly are the\n" +
+	"same request. `amounts_gwei` is otherwise order-sensitive, since element i is\n" +
+	"validator i's stake.\n" +
+	"A replayed response carries the operation in its current state; poll\n" +
+	"`GET /ethereum/operations/{id}` for artifacts. That state includes FAILED: replaying\n" +
+	"an operation that already failed returns 200 with operation.status FAILED, not an\n" +
+	"error status, so branch on operation.status rather than treating any 2xx as\n" +
+	"'accepted, keep polling'. To attempt the work again, use a fresh client_request_id.J\xac\x01\n" +
 	"\x03202\x12\xa4\x01\n" +
 	"!Operation accepted and processing\"\x7f\n" +
 	"\x10application/json\x12k{\"operation\":{\"id\":\"op_1234\",\"type\":\"PROVISION\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}J\xba\x01\n" +
 	"\x03400\x12\xb2\x01\n" +
 	"\x1aInvalid request parameters\"\x93\x01\n" +
-	"\x10application/json\x12\x7f{\"error\":{\"code\":\"INVALID_ADDRESS\",\"message\":\"Invalid withdrawal address format\",\"details\":{\"withdrawal_address\":\"0xinvalid\"}}}J\xb6\x02\n" +
-	"\x03409\x12\xae\x02\n" +
-	"GIdempotency conflict - same client_request_id with different parameters\"\xe2\x01\n" +
-	"\x10application/json\x12\xcd\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"Request with this client_request_id already exists with different parameters\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\"}}}J\xe8\x01\n" +
+	"\x10application/json\x12\x7f{\"error\":{\"code\":\"INVALID_ADDRESS\",\"message\":\"Invalid withdrawal address format\",\"details\":{\"withdrawal_address\":\"0xinvalid\"}}}J\xda\x02\n" +
+	"\x03409\x12\xd2\x02\n" +
+	"GIdempotency conflict - same client_request_id with different parameters\"\x86\x02\n" +
+	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xe8\x01\n" +
 	"\x03501\x12\xe0\x01\n" +
 	")Operator does not support this capability\"\xb2\x01\n" +
 	"\x10application/json\x12\x9d\x01{\"error\":{\"code\":\"FEATURE_NOT_SUPPORTED\",\"message\":\"Operator does not support provision\",\"details\":{\"operator\":\"unknown_operator\",\"capability\":\"provision\"}}}J\xc1\x01\n" +
 	"\x03502\x12\xb9\x01\n" +
 	"\x1dNode operator API unavailable\"\x97\x01\n" +
-	"\x10application/json\x12\x82\x01{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"Node operator API is temporarily unavailable\",\"details\":{\"operator\":\"galaxy\"}}}\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/ethereum/validators/provision\x12\xce\b\n" +
-	"\x04Exit\x12\x1f.public.ethereum.v1.ExitRequest\x1a .public.ethereum.v1.ExitResponse\"\x82\b\x92A\xd7\a\n" +
-	"\x10Ethereum Actions\x12\x14Exit validators (CL)\x1a\xfd\x01Initiate a voluntary exit via the consensus layer.\n" +
+	"\x10application/json\x12\x82\x01{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"Node operator API is temporarily unavailable\",\"details\":{\"operator\":\"galaxy\"}}}\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/ethereum/validators/provision\x12\xb9\x12\n" +
+	"\x04Exit\x12\x1f.public.ethereum.v1.ExitRequest\x1a .public.ethereum.v1.ExitResponse\"\xed\x11\x92A\xc2\x11\n" +
+	"\x10Ethereum Actions\x12\x14Exit validators (CL)\x1a\x8b\tInitiate a voluntary exit via the consensus layer.\n" +
 	"\n" +
 	"The node operator will broadcast the signed exit message to the beacon chain.\n" +
 	"Each validator can be identified by `pubkey` OR `validator_index`.\n" +
-	"Poll `GET /ethereum/operations/{id}` for status updates.J\xa0\x01\n" +
+	"Poll `GET /ethereum/operations/{id}` for status updates.\n" +
+	"\n" +
+	"**Idempotency.** `client_request_id` is unique per organisation across all operation\n" +
+	"types. Repeating a request with the same `client_request_id` **and the same parameters**\n" +
+	"returns the existing operation with HTTP 200 — safe to retry after a network failure or\n" +
+	"timeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\n" +
+	"Parameter comparison ignores hex letter-case and the optional `0x` prefix on pubkeys\n" +
+	"and addresses, and ignores the order of the repeated validator entries.\n" +
+	"A replayed response carries the operation in its current state; poll\n" +
+	"`GET /ethereum/operations/{id}` for artifacts. That state includes FAILED: replaying\n" +
+	"an operation that already failed returns 200 with operation.status FAILED, not an\n" +
+	"error status, so branch on operation.status rather than treating any 2xx as\n" +
+	"'accepted, keep polling'. To attempt the work again, use a fresh client_request_id.J\xa0\x01\n" +
 	"\x03202\x12\x98\x01\n" +
 	"\x17Exit operation accepted\"}\n" +
 	"\x10application/json\x12i{\"operation\":{\"id\":\"op_5678\",\"type\":\"EXIT_CL\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}J}\n" +
@@ -854,26 +893,59 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12O{\"error\":{\"code\":\"INVALID_PUBKEY\",\"message\":\"Invalid validator pubkey format\"}}J\xa1\x01\n" +
 	"\x03404\x12\x99\x01\n" +
 	"\x13Validator not found\"\x81\x01\n" +
-	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}J\xe6\x01\n" +
+	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}J\xda\x02\n" +
+	"\x03409\x12\xd2\x02\n" +
+	"GIdempotency conflict - same client_request_id with different parameters\"\x86\x02\n" +
+	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xe6\x01\n" +
 	"\x03422\x12\xde\x01\n" +
 	"\x18Validator in wrong state\"\xc1\x01\n" +
-	"\x10application/json\x12\xac\x01{\"error\":{\"code\":\"VALIDATOR_NOT_ACTIVE\",\"message\":\"Cannot exit validator in PENDING_DEPOSIT state\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\",\"current_status\":\"PENDING_DEPOSIT\"}}}\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/ethereum/validators/exit\x12\xe0\x04\n" +
-	"\rExitPreSigned\x12(.public.ethereum.v1.ExitPreSignedRequest\x1a).public.ethereum.v1.ExitPreSignedResponse\"\xf9\x03\x92A\xc3\x03\n" +
-	"\x10Ethereum Actions\x12\x1cGet pre-signed exit messages\x1a\xdc\x01Request pre-signed voluntary exit messages from the node operator.\n" +
+	"\x10application/json\x12\xac\x01{\"error\":{\"code\":\"VALIDATOR_NOT_ACTIVE\",\"message\":\"Cannot exit validator in PENDING_DEPOSIT state\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\",\"current_status\":\"PENDING_DEPOSIT\"}}}\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/ethereum/validators/exit\x12\xcb\x0e\n" +
+	"\rExitPreSigned\x12(.public.ethereum.v1.ExitPreSignedRequest\x1a).public.ethereum.v1.ExitPreSignedResponse\"\xe4\r\x92A\xae\r\n" +
+	"\x10Ethereum Actions\x12\x1cGet pre-signed exit messages\x1a\xea\bRequest pre-signed voluntary exit messages from the node operator.\n" +
 	"\n" +
 	"Unlike `/exit`, this returns the signed message for the client to broadcast.\n" +
-	"Useful when client wants control over exit timing or beacon node selection.J\xb1\x01\n" +
+	"Useful when client wants control over exit timing or beacon node selection.\n" +
+	"\n" +
+	"**Idempotency.** `client_request_id` is unique per organisation across all operation\n" +
+	"types. Repeating a request with the same `client_request_id` **and the same parameters**\n" +
+	"returns the existing operation with HTTP 200 — safe to retry after a network failure or\n" +
+	"timeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\n" +
+	"Parameter comparison ignores hex letter-case and the optional `0x` prefix on pubkeys\n" +
+	"and addresses, and ignores the order of the repeated validator entries.\n" +
+	"A replayed response carries the operation in its current state; poll\n" +
+	"`GET /ethereum/operations/{id}` for artifacts. That state includes FAILED: replaying\n" +
+	"an operation that already failed returns 200 with operation.status FAILED, not an\n" +
+	"error status, so branch on operation.status rather than treating any 2xx as\n" +
+	"'accepted, keep polling'. To attempt the work again, use a fresh client_request_id.J\xb1\x01\n" +
 	"\x03202\x12\xa9\x01\n" +
 	" Pre-signed exit request accepted\"\x84\x01\n" +
-	"\x10application/json\x12p{\"operation\":{\"id\":\"op_9012\",\"type\":\"EXIT_PRESIGNED\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}\x82\xd3\xe4\x93\x02,:\x01*\"'/v1/ethereum/validators/exit/pre-signed\x12\xa1\x06\n" +
-	"\x12UpdateFeeRecipient\x12-.public.ethereum.v1.UpdateFeeRecipientRequest\x1a..public.ethereum.v1.UpdateFeeRecipientResponse\"\xab\x05\x92A\xf7\x04\n" +
-	"\x10Ethereum Actions\x12\x14Update fee recipient\x1a\xa5\x01Update fee recipient address for validators.\n" +
+	"\x10application/json\x12p{\"operation\":{\"id\":\"op_9012\",\"type\":\"EXIT_PRESIGNED\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}J\xda\x02\n" +
+	"\x03409\x12\xd2\x02\n" +
+	"GIdempotency conflict - same client_request_id with different parameters\"\x86\x02\n" +
+	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}\x82\xd3\xe4\x93\x02,:\x01*\"'/v1/ethereum/validators/exit/pre-signed\x12\x8c\x10\n" +
+	"\x12UpdateFeeRecipient\x12-.public.ethereum.v1.UpdateFeeRecipientRequest\x1a..public.ethereum.v1.UpdateFeeRecipientResponse\"\x96\x0f\x92A\xe2\x0e\n" +
+	"\x10Ethereum Actions\x12\x14Update fee recipient\x1a\xb3\bUpdate fee recipient address for validators.\n" +
 	"\n" +
 	"**Note:** Currently only supported by Galaxy operator.\n" +
-	"Requires node operator to update proposer settings (BLS signed).J\xb4\x01\n" +
+	"Requires node operator to update proposer settings (BLS signed).\n" +
+	"\n" +
+	"**Idempotency.** `client_request_id` is unique per organisation across all operation\n" +
+	"types. Repeating a request with the same `client_request_id` **and the same parameters**\n" +
+	"returns the existing operation with HTTP 200 — safe to retry after a network failure or\n" +
+	"timeout. Repeating it with **different** parameters returns 409 `OPERATION_ALREADY_EXISTS`.\n" +
+	"Parameter comparison ignores hex letter-case and the optional `0x` prefix on pubkeys\n" +
+	"and addresses, and ignores the order of the repeated validator entries.\n" +
+	"A replayed response carries the operation in its current state; poll\n" +
+	"`GET /ethereum/operations/{id}` for artifacts. That state includes FAILED: replaying\n" +
+	"an operation that already failed returns 200 with operation.status FAILED, not an\n" +
+	"error status, so branch on operation.status rather than treating any 2xx as\n" +
+	"'accepted, keep polling'. To attempt the work again, use a fresh client_request_id.J\xb4\x01\n" +
 	"\x03202\x12\xac\x01\n" +
 	"\x1dFee recipient update accepted\"\x8a\x01\n" +
-	"\x10application/json\x12v{\"operation\":{\"id\":\"op_4567\",\"type\":\"FEE_RECIPIENT_UPDATE\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}J\xed\x01\n" +
+	"\x10application/json\x12v{\"operation\":{\"id\":\"op_4567\",\"type\":\"FEE_RECIPIENT_UPDATE\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}J\xda\x02\n" +
+	"\x03409\x12\xd2\x02\n" +
+	"GIdempotency conflict - same client_request_id with different parameters\"\x86\x02\n" +
+	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xed\x01\n" +
 	"\x03501\x12\xe5\x01\n" +
 	"/Operator does not support fee recipient updates\"\xb1\x01\n" +
 	"\x10application/json\x12\x9c\x01{\"error\":{\"code\":\"FEE_RECIPIENT_UPDATE_NOT_SUPPORTED\",\"message\":\"Operator figment does not support fee recipient updates\",\"details\":{\"operator\":\"figment\"}}}\x82\xd3\xe4\x93\x02*:\x01*\x1a%/v1/ethereum/validators/fee-recipient\x12\xa3\b\n" +
