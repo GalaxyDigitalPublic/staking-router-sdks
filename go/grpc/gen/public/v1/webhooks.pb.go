@@ -30,7 +30,8 @@ type WebhookEndpoint struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Unique webhook endpoint ID.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// The HTTPS URL that receives webhook events.
+	// The HTTPS URL that receives webhook events, normalized at registration;
+	// see RegisterWebhookRequest.url.
 	Url string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	// Whether the endpoint is active.
 	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
@@ -114,7 +115,14 @@ func (x *WebhookEndpoint) GetEvents() []string {
 // RegisterWebhookRequest registers a new webhook endpoint.
 type RegisterWebhookRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The HTTPS URL to deliver webhook events to.
+	// The HTTPS URL to deliver webhook events to. Rejected with
+	// `INVALID_WEBHOOK_URL`: a non-HTTPS scheme, embedded credentials
+	// (`https://user:password@host/hook`), or a host resolving to a private address.
+	//
+	// Do not place credentials or tokens anywhere in this URL — it is stored and
+	// returned by ListWebhooks, so anything in it is retained in plaintext, including
+	// a query-string token (accepted, but strongly discouraged). Authenticate
+	// deliveries by verifying `X-Staking-Router-Signature`; see the `secret` field.
 	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	// Shared secret used for HMAC-SHA256 request signing. Minimum 16 characters.
 	// If omitted, the router generates a cryptographically random secret.
@@ -426,20 +434,20 @@ const file_public_v1_webhooks_proto_rawDesc = "" +
 	"\x15DeleteWebhookResponse\"\x15\n" +
 	"\x13ListWebhooksRequest\"P\n" +
 	"\x14ListWebhooksResponse\x128\n" +
-	"\tendpoints\x18\x01 \x03(\v2\x1a.public.v1.WebhookEndpointR\tendpoints2\xea\n" +
+	"\tendpoints\x18\x01 \x03(\v2\x1a.public.v1.WebhookEndpointR\tendpoints2\xf6\n" +
 	"\n" +
-	"\x0eWebhookService\x12\xb0\x06\n" +
-	"\x0fRegisterWebhook\x12!.public.v1.RegisterWebhookRequest\x1a\".public.v1.RegisterWebhookResponse\"\xd5\x05\x92A\xba\x05\n" +
+	"\x0eWebhookService\x12\xbc\x06\n" +
+	"\x0fRegisterWebhook\x12!.public.v1.RegisterWebhookRequest\x1a\".public.v1.RegisterWebhookResponse\"\xe1\x05\x92A\xc6\x05\n" +
 	"\bWebhooks\x12\x10Register webhook\x1a\xd7\x03Register a new webhook endpoint to receive push notifications when operations reach a terminal status.\n" +
 	"\n" +
 	"When an operation completes (SUCCEEDED, FAILED, or PARTIAL_SUCCESS), the system POSTs a signed JSON payload to each registered endpoint.\n" +
 	"\n" +
 	"**Signature verification:** Each request includes `X-Staking-Router-Signature: t=<ts>,v1=<hmac>` where the HMAC is `HMAC-SHA256(secret, \"{timestamp}.{body}\")`. Check that `t` is within ±5 minutes to guard against replay attacks.J$\n" +
 	"\x03200\x12\x1d\n" +
-	"\x1bWebhook endpoint registeredJ\x9b\x01\n" +
-	"\x03400\x12\x93\x01\n" +
-	"$Invalid webhook registration request\"k\n" +
-	"\x10application/json\x12W{\"error\":{\"code\":\"INVALID_WEBHOOK_URL\",\"message\":\"url must be a valid HTTPS endpoint\"}}\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/webhooks\x12\xa3\x02\n" +
+	"\x1bWebhook endpoint registeredJ\xa7\x01\n" +
+	"\x03400\x12\x9f\x01\n" +
+	"$Invalid webhook registration request\"w\n" +
+	"\x10application/json\x12c{\"error\":{\"code\":\"INVALID_WEBHOOK_URL\",\"message\":\"invalid webhook URL: url must use HTTPS scheme\"}}\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/webhooks\x12\xa3\x02\n" +
 	"\rDeleteWebhook\x12\x1f.public.v1.DeleteWebhookRequest\x1a .public.v1.DeleteWebhookResponse\"\xce\x01\x92A\xb1\x01\n" +
 	"\bWebhooks\x12\x0eDelete webhook\x1aMRemove a registered webhook endpoint. In-flight deliveries are not cancelled.J!\n" +
 	"\x03200\x12\x1a\n" +
