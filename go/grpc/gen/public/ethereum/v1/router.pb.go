@@ -769,7 +769,7 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x06pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x06pubkey\x127\n" +
 	"\x15fee_recipient_address\x18\x02 \x01(\tB\x03\xe0A\x02R\x13feeRecipientAddress\"Y\n" +
 	"\x1aUpdateFeeRecipientResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2š\x01\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2ο\x01\n" +
 	"\x14StakingRouterService\x12\x9d\x05\n" +
 	"\fGetOperation\x12'.public.ethereum.v1.GetOperationRequest\x1a(.public.ethereum.v1.GetOperationResponse\"\xb9\x04\x92A\x91\x04\n" +
 	"\n" +
@@ -984,27 +984,44 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12O{\"error\":{\"code\":\"INVALID_PUBKEY\",\"message\":\"Invalid validator pubkey format\"}}J\xa1\x01\n" +
 	"\x03404\x12\x99\x01\n" +
 	"\x13Validator not found\"\x81\x01\n" +
-	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/ethereum/transactions/withdraw\x12\xd5\f\n" +
-	"\x1cCreateConsolidateTransaction\x127.public.ethereum.v1.CreateConsolidateTransactionRequest\x1a8.public.ethereum.v1.CreateConsolidateTransactionResponse\"\xc1\v\x92A\x8d\v\n" +
-	"\x15Ethereum Transactions\x12 Create consolidation transaction\x1a\xaa\x03Build unsigned consolidation transactions to merge validators (EIP-7251).\n" +
+	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/ethereum/transactions/withdraw\x12\xde*\n" +
+	"\x1cCreateConsolidateTransaction\x127.public.ethereum.v1.CreateConsolidateTransactionRequest\x1a8.public.ethereum.v1.CreateConsolidateTransactionResponse\"\xca)\x92A\x96)\n" +
+	"\x15Ethereum Transactions\x12 Create consolidation transaction\x1a\xb1\x16Build unsigned consolidation transactions to merge validators (EIP-7251).\n" +
 	"\n" +
-	"Source and target validators must share the same withdrawal credentials.\n" +
+	"Every pair is checked against the consensus layer before any transaction is built. A failure rejects the whole request.\n" +
 	"\n" +
-	"**Signing:** Must be signed by withdrawal address (`signer: WITHDRAWAL_ADDRESS`).\n" +
+	"**Chain rules (EIP-7251 would reject the transaction on-chain, after spending the fee):**\n" +
+	"- The source must have execution (0x01) or compounding (0x02) credentials; the target must have compounding (0x02).\n" +
+	"- Both source and target must be active; neither may be slashed, exiting, or already exited.\n" +
+	"- For a consolidation into a *different* validator, the source must have been active for at least 256 epochs (SHARD_COMMITTEE_PERIOD). This does **not** apply to a switch-to-compounding (`source_pubkey == target_pubkey`), which the chain exempts.\n" +
+	"- The source must have no queued partial withdrawal (cross-validator only).\n" +
+	"\n" +
+	"**Staking Router policy (stricter than the chain):**\n" +
+	"- The target's on-chain withdrawal credential address must match the source's. EIP-7251 itself does not compare the two addresses — but a consolidation moves the source's entire balance under the target's withdrawal credentials, so Staking Router will not route funds to an address it cannot tie back to the source. Consolidating between two validators with different withdrawal addresses is rejected even though the chain would accept it.\n" +
+	"- A validator may appear as the source of at most one consolidation per request, and may not be both a source and a target. Processing a consolidation initiates the *source's* exit, so a validator named as the source twice can only ever succeed once — the rest are discarded on-chain with their fee spent, in any order. A validator that is a source in one pair and a target in another is order-dependent instead: one broadcast order processes both, the other drops one and spends its fee. The response array carries no ordering contract and Staking Router cannot observe how you broadcast, so such a batch is rejected rather than left to chance. Several validators consolidating into one shared target is unaffected — that is the normal case.\n" +
+	"\n" +
+	"**Signing:** Must be signed by the source validator's withdrawal address (`signer: WITHDRAWAL_ADDRESS`). EIP-7251 checks the request's `source_address` — which is `msg.sender` — against the source validator's on-chain withdrawal credentials, so `unsigned_transaction.from` and `signers` always carry that address: the value supplied in `withdrawal_address`, or, when it is omitted, the address read from the source's credentials. Neither is ever empty, and a transaction sent from any other address is discarded on-chain after the request fee is spent.\n" +
 	"\n" +
 	"**Verification:** Before signing, verify:\n" +
 	"- `inputs` matches your request\n" +
 	"- `unsigned_transaction.to` equals the consolidation precompile\n" +
-	"- `unsigned_transaction.from` is your withdrawal addressJ\x9f\x03\n" +
+	"- `unsigned_transaction.from` is the source validator's withdrawal address (see Signing); it is never emptyJ\x9f\x03\n" +
 	"\x03200\x12\x97\x03\n" +
 	",Unsigned transactions generated successfully\"\xe6\x02\n" +
 	"\x10application/json\x12\xd1\x02{\"transactions\":[{\"inputs\":{\"source_pubkey\":\"0x8a2f5c3b...\",\"target_pubkey\":\"0x9b3e6d4c...\",\"contract_address\":\"0x0000bbddc7ce488642fb579f8b00f3a590007251\"},\"unsigned_transaction\":{\"chain_id\":\"1\",\"to\":\"0x0000bbddc7ce488642fb579f8b00f3a590007251\",\"data\":\"0x8a2f5c3b...9b3e6d4c...\",\"gas_limit\":\"100000\"},\"signers\":[\"WITHDRAWAL_ADDRESS\"]}]}J\xd8\x01\n" +
 	"\x03404\x12\xd0\x01\n" +
 	"$Source or target validator not found\"\xa7\x01\n" +
-	"\x10application/json\x12\x92\x01{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"consolidations[0]: source validator not found\",\"details\":{\"field\":\"source_pubkey\",\"index\":\"0\"}}}J\xa7\x02\n" +
-	"\x03422\x12\x9f\x02\n" +
-	"\x86\x01Incompatible withdrawal credentials, or source and target validator are the same without eligible credentials to switch to compounding\"\x93\x01\n" +
-	"\x10application/json\x12\x7f{\"error\":{\"code\":\"WITHDRAWAL_CREDENTIALS_MISMATCH\",\"message\":\"Source and target validators must share withdrawal credentials\"}}\x82\xd3\xe4\x93\x02*:\x01*\"%/v1/ethereum/transactions/consolidate\x12\xae\x02\n" +
+	"\x10application/json\x12\x92\x01{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"consolidations[0]: source validator not found\",\"details\":{\"field\":\"source_pubkey\",\"index\":\"0\"}}}J\xd3\t\n" +
+	"\x03409\x12\xcb\t\n" +
+	"\xb9\aPrecondition failed. Either the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`, `WITHDRAWAL_CREDENTIALS_MISMATCH`), source and target are the same without eligible credentials to switch to compounding (`CONSOLIDATION_SAME_VALIDATOR`), a validator fails the consensus-layer eligibility gates: not active / not active long enough (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), already exited (`VALIDATOR_ALREADY_EXITED`), or the source has a queued partial withdrawal (`OPERATION_IN_PROGRESS`).\n" +
+	"\n" +
+	"A validator named as the source of more than one consolidation, or as both a source and a target, is rejected with `DUPLICATE_PUBKEYS` as a 400 instead — that is a request-shape error, decided before any consensus-layer read.\n" +
+	"\n" +
+	"All precondition failures on this endpoint are served as 409: the REST gateway derives the HTTP status from the gRPC code, and every code above maps to FAILED_PRECONDITION.\"\x8c\x02\n" +
+	"\x10application/json\x12\xf7\x01{\"error\":{\"code\":\"VALIDATOR_NOT_ACTIVE\",\"message\":\"consolidations[0]: source validator must be active at least 256 epochs before consolidation\",\"details\":{\"field\":\"source_pubkey\",\"index\":\"0\",\"pubkey\":\"0x8a2f5c3b...\",\"cl_status\":\"active_ongoing\"}}}J\xd3\x03\n" +
+	"\x03503\x12\xcb\x03\n" +
+	"\xc2\x02The consensus-layer eligibility source or the execution-layer fee lookup is unreachable or unconfigured, so a precondition could not be evaluated at all. The request is rejected rather than built on unverified data. Note this covers unreachability, not staleness: a reachable but lagging indexer is not currently detected.\"\x83\x01\n" +
+	"\x10application/json\x12o{\"error\":{\"code\":\"SERVICE_UNAVAILABLE\",\"message\":\"consolidation eligibility check is not currently available\"}}\x82\xd3\xe4\x93\x02*:\x01*\"%/v1/ethereum/transactions/consolidate\x12\xae\x02\n" +
 	"\x14BroadcastTransaction\x12/.public.ethereum.v1.BroadcastTransactionRequest\x1a0.public.ethereum.v1.BroadcastTransactionResponse\"\xb2\x01\x92A\x80\x01\n" +
 	"\x15Ethereum Transactions\x12\x1cBroadcast signed transaction\x1aISubmit a signed RLP-encoded EIP-1559 transaction to the Ethereum network.\x82\xd3\xe4\x93\x02(:\x01*\"#/v1/ethereum/transactions/broadcast\x12\xa6\x02\n" +
 	"\x14GetTransactionStatus\x12/.public.ethereum.v1.GetTransactionStatusRequest\x1a0.public.ethereum.v1.GetTransactionStatusResponse\"\xaa\x01\x92Al\n" +

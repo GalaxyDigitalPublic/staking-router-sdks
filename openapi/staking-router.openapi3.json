@@ -468,7 +468,7 @@
     "/v1/ethereum/transactions/consolidate": {
       "post": {
         "summary": "Create consolidation transaction",
-        "description": "Build unsigned consolidation transactions to merge validators (EIP-7251).\n\nSource and target validators must share the same withdrawal credentials.\n\n**Signing:** Must be signed by withdrawal address (`signer: WITHDRAWAL_ADDRESS`).\n\n**Verification:** Before signing, verify:\n- `inputs` matches your request\n- `unsigned_transaction.to` equals the consolidation precompile\n- `unsigned_transaction.from` is your withdrawal address",
+        "description": "Build unsigned consolidation transactions to merge validators (EIP-7251).\n\nEvery pair is checked against the consensus layer before any transaction is built. A failure rejects the whole request.\n\n**Chain rules (EIP-7251 would reject the transaction on-chain, after spending the fee):**\n- The source must have execution (0x01) or compounding (0x02) credentials; the target must have compounding (0x02).\n- Both source and target must be active; neither may be slashed, exiting, or already exited.\n- For a consolidation into a *different* validator, the source must have been active for at least 256 epochs (SHARD_COMMITTEE_PERIOD). This does **not** apply to a switch-to-compounding (`source_pubkey == target_pubkey`), which the chain exempts.\n- The source must have no queued partial withdrawal (cross-validator only).\n\n**Staking Router policy (stricter than the chain):**\n- The target's on-chain withdrawal credential address must match the source's. EIP-7251 itself does not compare the two addresses \u2014 but a consolidation moves the source's entire balance under the target's withdrawal credentials, so Staking Router will not route funds to an address it cannot tie back to the source. Consolidating between two validators with different withdrawal addresses is rejected even though the chain would accept it.\n- A validator may appear as the source of at most one consolidation per request, and may not be both a source and a target. Processing a consolidation initiates the *source's* exit, so a validator named as the source twice can only ever succeed once \u2014 the rest are discarded on-chain with their fee spent, in any order. A validator that is a source in one pair and a target in another is order-dependent instead: one broadcast order processes both, the other drops one and spends its fee. The response array carries no ordering contract and Staking Router cannot observe how you broadcast, so such a batch is rejected rather than left to chance. Several validators consolidating into one shared target is unaffected \u2014 that is the normal case.\n\n**Signing:** Must be signed by the source validator's withdrawal address (`signer: WITHDRAWAL_ADDRESS`). EIP-7251 checks the request's `source_address` \u2014 which is `msg.sender` \u2014 against the source validator's on-chain withdrawal credentials, so `unsigned_transaction.from` and `signers` always carry that address: the value supplied in `withdrawal_address`, or, when it is omitted, the address read from the source's credentials. Neither is ever empty, and a transaction sent from any other address is discarded on-chain after the request fee is spent.\n\n**Verification:** Before signing, verify:\n- `inputs` matches your request\n- `unsigned_transaction.to` equals the consolidation precompile\n- `unsigned_transaction.from` is the source validator's withdrawal address (see Signing); it is never empty",
         "operationId": "StakingRouterService_CreateConsolidateTransaction",
         "responses": {
           "200": {
@@ -527,8 +527,8 @@
               }
             }
           },
-          "422": {
-            "description": "Incompatible withdrawal credentials, or source and target validator are the same without eligible credentials to switch to compounding",
+          "409": {
+            "description": "Precondition failed. Either the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`, `WITHDRAWAL_CREDENTIALS_MISMATCH`), source and target are the same without eligible credentials to switch to compounding (`CONSOLIDATION_SAME_VALIDATOR`), a validator fails the consensus-layer eligibility gates: not active / not active long enough (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), already exited (`VALIDATOR_ALREADY_EXITED`), or the source has a queued partial withdrawal (`OPERATION_IN_PROGRESS`).\n\nA validator named as the source of more than one consolidation, or as both a source and a target, is rejected with `DUPLICATE_PUBKEYS` as a 400 instead \u2014 that is a request-shape error, decided before any consensus-layer read.\n\nAll precondition failures on this endpoint are served as 409: the REST gateway derives the HTTP status from the gRPC code, and every code above maps to FAILED_PRECONDITION.",
             "content": {
               "application/json": {
                 "schema": {},
@@ -536,8 +536,32 @@
                   "response": {
                     "value": {
                       "error": {
-                        "code": "WITHDRAWAL_CREDENTIALS_MISMATCH",
-                        "message": "Source and target validators must share withdrawal credentials"
+                        "code": "VALIDATOR_NOT_ACTIVE",
+                        "message": "consolidations[0]: source validator must be active at least 256 epochs before consolidation",
+                        "details": {
+                          "field": "source_pubkey",
+                          "index": "0",
+                          "pubkey": "0x8a2f5c3b...",
+                          "cl_status": "active_ongoing"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The consensus-layer eligibility source or the execution-layer fee lookup is unreachable or unconfigured, so a precondition could not be evaluated at all. The request is rejected rather than built on unverified data. Note this covers unreachability, not staleness: a reachable but lagging indexer is not currently detected.",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "SERVICE_UNAVAILABLE",
+                        "message": "consolidation eligibility check is not currently available"
                       }
                     }
                   }
