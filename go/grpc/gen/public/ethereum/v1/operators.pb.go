@@ -524,7 +524,7 @@ type GalaxyProvisionParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Galaxy account identifier.
 	Account string `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
-	// Deployment region.
+	// Deployment region. Optional — Galaxy defaults to EU when it is omitted.
 	Region        GalaxyProvisionParams_Region `protobuf:"varint,2,opt,name=region,proto3,enum=public.ethereum.v1.GalaxyProvisionParams_Region" json:"region,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -925,10 +925,10 @@ const file_public_ethereum_v1_operators_proto_rawDesc = "" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x18\n" +
 	"\aexample\x18\x04 \x01(\tR\aexample\x12\x12\n" +
-	"\x04enum\x18\x05 \x03(\tR\x04enum\"\xb5\x01\n" +
+	"\x04enum\x18\x05 \x03(\tR\x04enum\"\xb0\x01\n" +
 	"\x15GalaxyProvisionParams\x12\x18\n" +
-	"\aaccount\x18\x01 \x01(\tR\aaccount\x12M\n" +
-	"\x06region\x18\x02 \x01(\x0e20.public.ethereum.v1.GalaxyProvisionParams.RegionB\x03\xe0A\x02R\x06region\"3\n" +
+	"\aaccount\x18\x01 \x01(\tR\aaccount\x12H\n" +
+	"\x06region\x18\x02 \x01(\x0e20.public.ethereum.v1.GalaxyProvisionParams.RegionR\x06region\"3\n" +
 	"\x06Region\x12\x0f\n" +
 	"\vUNSPECIFIED\x10\x00\x12\x06\n" +
 	"\x02US\x10\x01\x12\x06\n" +
