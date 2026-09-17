@@ -34,7 +34,9 @@ const (
 	EthTransactionStatus_TX_CONFIRMED EthTransactionStatus = 2
 	// Transaction was mined but reverted.
 	EthTransactionStatus_TX_FAILED EthTransactionStatus = 3
-	// Transaction hash is not known to the node.
+	// Transaction hash is not known to the node. GetTransactionStatus no longer
+	// returns this: an unknown hash is a 404 with a TRANSACTION_NOT_FOUND envelope
+	// (BS-5140). Kept for wire compatibility and for internal consumers.
 	EthTransactionStatus_TX_NOT_FOUND EthTransactionStatus = 4
 )
 
@@ -1174,9 +1176,9 @@ type GetTransactionStatusResponse struct {
 	TransactionHash string `protobuf:"bytes,1,opt,name=transaction_hash,json=transactionHash,proto3" json:"transaction_hash,omitempty"`
 	// Current status.
 	Status EthTransactionStatus `protobuf:"varint,2,opt,name=status,proto3,enum=public.ethereum.v1.EthTransactionStatus" json:"status,omitempty"`
-	// Block number in which the transaction was mined (0 when pending or not found).
+	// Block number in which the transaction was mined (0 when pending).
 	BlockNumber uint64 `protobuf:"varint,3,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
-	// Gas actually used (0 when pending or not found).
+	// Gas actually used (0 when pending).
 	GasUsed       uint64 `protobuf:"varint,4,opt,name=gas_used,json=gasUsed,proto3" json:"gas_used,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

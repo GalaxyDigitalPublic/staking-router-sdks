@@ -769,7 +769,7 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x06pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x06pubkey\x127\n" +
 	"\x15fee_recipient_address\x18\x02 \x01(\tB\x03\xe0A\x02R\x13feeRecipientAddress\"Y\n" +
 	"\x1aUpdateFeeRecipientResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2ο\x01\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\xbf\xc3\x01\n" +
 	"\x14StakingRouterService\x12\x9d\x05\n" +
 	"\fGetOperation\x12'.public.ethereum.v1.GetOperationRequest\x1a(.public.ethereum.v1.GetOperationResponse\"\xb9\x04\x92A\x91\x04\n" +
 	"\n" +
@@ -1023,9 +1023,17 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\xc2\x02The consensus-layer eligibility source or the execution-layer fee lookup is unreachable or unconfigured, so a precondition could not be evaluated at all. The request is rejected rather than built on unverified data. Note this covers unreachability, not staleness: a reachable but lagging indexer is not currently detected.\"\x83\x01\n" +
 	"\x10application/json\x12o{\"error\":{\"code\":\"SERVICE_UNAVAILABLE\",\"message\":\"consolidation eligibility check is not currently available\"}}\x82\xd3\xe4\x93\x02*:\x01*\"%/v1/ethereum/transactions/consolidate\x12\xae\x02\n" +
 	"\x14BroadcastTransaction\x12/.public.ethereum.v1.BroadcastTransactionRequest\x1a0.public.ethereum.v1.BroadcastTransactionResponse\"\xb2\x01\x92A\x80\x01\n" +
-	"\x15Ethereum Transactions\x12\x1cBroadcast signed transaction\x1aISubmit a signed RLP-encoded EIP-1559 transaction to the Ethereum network.\x82\xd3\xe4\x93\x02(:\x01*\"#/v1/ethereum/transactions/broadcast\x12\xa6\x02\n" +
-	"\x14GetTransactionStatus\x12/.public.ethereum.v1.GetTransactionStatusRequest\x1a0.public.ethereum.v1.GetTransactionStatusResponse\"\xaa\x01\x92Al\n" +
-	"\x15Ethereum Transactions\x12\x16Get transaction status\x1a;Query the current on-chain status of a transaction by hash.\x82\xd3\xe4\x93\x025\x123/v1/ethereum/transactions/{transaction_hash}/status\x12\x81\x03\n" +
+	"\x15Ethereum Transactions\x12\x1cBroadcast signed transaction\x1aISubmit a signed RLP-encoded EIP-1559 transaction to the Ethereum network.\x82\xd3\xe4\x93\x02(:\x01*\"#/v1/ethereum/transactions/broadcast\x12\x97\x06\n" +
+	"\x14GetTransactionStatus\x12/.public.ethereum.v1.GetTransactionStatusRequest\x1a0.public.ethereum.v1.GetTransactionStatusResponse\"\x9b\x05\x92A\xdc\x04\n" +
+	"\x15Ethereum Transactions\x12\x16Get transaction status\x1a=Query the current on-chain status of a transaction by hash.\n" +
+	"\n" +
+	"J\xe9\x01\n" +
+	"\x03200\x12\xe1\x01\n" +
+	")Current on-chain state of the transaction\"\xb3\x01\n" +
+	"\x10application/json\x12\x9e\x01{\"transaction_hash\":\"0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1b90\",\"status\":\"TX_CONFIRMED\",\"block_number\":\"21000000\",\"gas_used\":\"21000\"}J\xff\x01\n" +
+	"\x03404\x12\xf7\x01\n" +
+	"-The transaction hash is not known to the node\"\xc5\x01\n" +
+	"\x10application/json\x12\xb0\x01{\"error\":{\"code\":\"TRANSACTION_NOT_FOUND\",\"message\":\"transaction not found\",\"details\":{\"transaction_hash\":\"0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1b90\"}}}\x82\xd3\xe4\x93\x025\x123/v1/ethereum/transactions/{transaction_hash}/status\x12\x81\x03\n" +
 	"\aGetFees\x12\".public.ethereum.v1.GetFeesRequest\x1a#.public.ethereum.v1.GetFeesResponse\"\xac\x02\x92A\x8c\x02\n" +
 	"\rEthereum Fees\x12\x11Get fee estimates\x1a@Get current fee estimates for an execution-layer operation type.J\xa5\x01\n" +
 	"\x03200\x12\x9d\x01\n" +

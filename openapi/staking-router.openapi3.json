@@ -760,15 +760,46 @@
     "/v1/ethereum/transactions/{transaction_hash}/status": {
       "get": {
         "summary": "Get transaction status",
-        "description": "Query the current on-chain status of a transaction by hash.",
+        "description": "Query the current on-chain status of a transaction by hash.\n\n",
         "operationId": "StakingRouterService_GetTransactionStatus",
         "responses": {
           "200": {
-            "description": "A successful response.",
+            "description": "Current on-chain state of the transaction",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetTransactionStatusResponse"
+                },
+                "examples": {
+                  "response": {
+                    "value": {
+                      "transaction_hash": "0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1b90",
+                      "status": "TX_CONFIRMED",
+                      "block_number": "21000000",
+                      "gas_used": "21000"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The transaction hash is not known to the node",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "TRANSACTION_NOT_FOUND",
+                        "message": "transaction not found",
+                        "details": {
+                          "transaction_hash": "0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1b90"
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -3109,7 +3140,7 @@
           "TX_NOT_FOUND"
         ],
         "default": "UNSPECIFIED_TX_STATUS",
-        "description": "EthTransactionStatus is the on-chain state of a transaction.\n\n - TX_PENDING: Transaction is in the mempool, not yet mined.\n - TX_CONFIRMED: Transaction was mined successfully.\n - TX_FAILED: Transaction was mined but reverted.\n - TX_NOT_FOUND: Transaction hash is not known to the node."
+        "description": "EthTransactionStatus is the on-chain state of a transaction.\n\n - TX_PENDING: Transaction is in the mempool, not yet mined.\n - TX_CONFIRMED: Transaction was mined successfully.\n - TX_FAILED: Transaction was mined but reverted.\n - TX_NOT_FOUND: Transaction hash is not known to the node. GetTransactionStatus no longer\nreturns this: an unknown hash is a 404 with a TRANSACTION_NOT_FOUND envelope\n(BS-5140). Kept for wire compatibility and for internal consumers."
       },
       "ExitArtifact": {
         "type": "object",
@@ -3376,10 +3407,7 @@
             "$ref": "#/components/schemas/GalaxyProvisionParams.Region"
           }
         },
-        "description": "GalaxyProvisionParams are the operator-specific parameters for Galaxy provision requests.",
-        "required": [
-          "region"
-        ]
+        "description": "GalaxyProvisionParams are the operator-specific parameters for Galaxy provision requests."
       },
       "GalaxyProvisionParams.Region": {
         "type": "string",
@@ -3627,12 +3655,12 @@
           "block_number": {
             "type": "string",
             "format": "uint64",
-            "description": "Block number in which the transaction was mined (0 when pending or not found)."
+            "description": "Block number in which the transaction was mined (0 when pending)."
           },
           "gas_used": {
             "type": "string",
             "format": "uint64",
-            "description": "Gas actually used (0 when pending or not found)."
+            "description": "Gas actually used (0 when pending)."
           }
         },
         "description": "GetTransactionStatusResponse contains the current on-chain state of a transaction."

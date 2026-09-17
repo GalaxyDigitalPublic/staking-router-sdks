@@ -379,7 +379,10 @@ type Error struct {
 //   - TX_PENDING: Transaction is in the mempool, not yet mined.
 //   - TX_CONFIRMED: Transaction was mined successfully.
 //   - TX_FAILED: Transaction was mined but reverted.
-//   - TX_NOT_FOUND: Transaction hash is not known to the node.
+//   - TX_NOT_FOUND: Transaction hash is not known to the node. GetTransactionStatus no longer
+//
+// returns this: an unknown hash is a 404 with a TRANSACTION_NOT_FOUND envelope
+// (BS-5140). Kept for wire compatibility and for internal consumers.
 type EthTransactionStatus string
 
 // ExitArtifact ExitArtifact represents a pre-signed exit message for a validator.
@@ -539,7 +542,7 @@ type GalaxyProvisionParams struct {
 	Account *string `json:"account,omitempty"`
 
 	// Region Region defines the allowed deployment regions for Galaxy.
-	Region GalaxyProvisionParamsRegion `json:"region"`
+	Region *GalaxyProvisionParamsRegion `json:"region,omitempty"`
 }
 
 // GalaxyProvisionParamsRegion Region defines the allowed deployment regions for Galaxy.
@@ -690,10 +693,10 @@ type GetRewardsResponse struct {
 
 // GetTransactionStatusResponse GetTransactionStatusResponse contains the current on-chain state of a transaction.
 type GetTransactionStatusResponse struct {
-	// BlockNumber Block number in which the transaction was mined (0 when pending or not found).
+	// BlockNumber Block number in which the transaction was mined (0 when pending).
 	BlockNumber *string `json:"block_number,omitempty"`
 
-	// GasUsed Gas actually used (0 when pending or not found).
+	// GasUsed Gas actually used (0 when pending).
 	GasUsed *string `json:"gas_used,omitempty"`
 
 	// Status EthTransactionStatus is the on-chain state of a transaction.
@@ -701,7 +704,9 @@ type GetTransactionStatusResponse struct {
 	//  - TX_PENDING: Transaction is in the mempool, not yet mined.
 	//  - TX_CONFIRMED: Transaction was mined successfully.
 	//  - TX_FAILED: Transaction was mined but reverted.
-	//  - TX_NOT_FOUND: Transaction hash is not known to the node.
+	//  - TX_NOT_FOUND: Transaction hash is not known to the node. GetTransactionStatus no longer
+	// returns this: an unknown hash is a 404 with a TRANSACTION_NOT_FOUND envelope
+	// (BS-5140). Kept for wire compatibility and for internal consumers.
 	Status *EthTransactionStatus `json:"status,omitempty"`
 
 	// TransactionHash Transaction hash that was queried.
@@ -995,7 +1000,14 @@ type RegisterWebhookRequest struct {
 	// This value is write-only and will never be returned in subsequent responses.
 	Secret *string `json:"secret,omitempty"`
 
-	// Url The HTTPS URL to deliver webhook events to.
+	// Url The HTTPS URL to deliver webhook events to. Rejected with
+	// `INVALID_WEBHOOK_URL`: a non-HTTPS scheme, embedded credentials
+	// (`https://user:password@host/hook`), or a host resolving to a private address.
+	//
+	// Do not place credentials or tokens anywhere in this URL — it is stored and
+	// returned by ListWebhooks, so anything in it is retained in plaintext, including
+	// a query-string token (accepted, but strongly discouraged). Authenticate
+	// deliveries by verifying `X-Staking-Router-Signature`; see the `secret` field.
 	Url string `json:"url"`
 }
 
@@ -1367,7 +1379,8 @@ type WebhookEndpoint struct {
 	// Id Unique webhook endpoint ID.
 	Id *string `json:"id,omitempty"`
 
-	// Url The HTTPS URL that receives webhook events.
+	// Url The HTTPS URL that receives webhook events, normalized at registration;
+	// see RegisterWebhookRequest.url.
 	Url *string `json:"url,omitempty"`
 }
 
@@ -6418,7 +6431,8 @@ type StakingRouterServiceCreateConsolidateTransactionResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CreateConsolidateTransactionResponse
 	JSON404      *interface{}
-	JSON422      *interface{}
+	JSON409      *interface{}
+	JSON503      *interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -6488,6 +6502,7 @@ type StakingRouterServiceGetTransactionStatusResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *GetTransactionStatusResponse
+	JSON404      *interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -8001,12 +8016,19 @@ func ParseStakingRouterServiceCreateConsolidateTransactionResponse(rsp *http.Res
 		}
 		response.JSON404 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
 		var dest interface{}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON422 = &dest
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
@@ -8106,6 +8128,13 @@ func ParseStakingRouterServiceGetTransactionStatusResponse(rsp *http.Response) (
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 

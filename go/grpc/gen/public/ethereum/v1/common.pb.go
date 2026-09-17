@@ -316,6 +316,10 @@ const (
 	ErrorCode_WITHDRAWAL_NOT_FOUND         ErrorCode = 34
 	ErrorCode_WEBHOOK_NOT_FOUND            ErrorCode = 35
 	ErrorCode_RECONCILIATION_RUN_NOT_FOUND ErrorCode = 39
+	// TRANSACTION_NOT_FOUND is grouped here with the other not-found
+	// errors, but its numeric value is 56 (the next free slot after
+	// PUBKEY_ALREADY_REGISTERED below) since 30-55 are already taken.
+	ErrorCode_TRANSACTION_NOT_FOUND ErrorCode = 56
 	// Webhook Validation Errors (400)
 	ErrorCode_INVALID_WEBHOOK_URL        ErrorCode = 36
 	ErrorCode_INVALID_WEBHOOK_SECRET     ErrorCode = 37
@@ -403,6 +407,7 @@ var (
 		34: "WITHDRAWAL_NOT_FOUND",
 		35: "WEBHOOK_NOT_FOUND",
 		39: "RECONCILIATION_RUN_NOT_FOUND",
+		56: "TRANSACTION_NOT_FOUND",
 		36: "INVALID_WEBHOOK_URL",
 		37: "INVALID_WEBHOOK_SECRET",
 		38: "INVALID_WEBHOOK_EVENT_TYPE",
@@ -469,6 +474,7 @@ var (
 		"WITHDRAWAL_NOT_FOUND":                34,
 		"WEBHOOK_NOT_FOUND":                   35,
 		"RECONCILIATION_RUN_NOT_FOUND":        39,
+		"TRANSACTION_NOT_FOUND":               56,
 		"INVALID_WEBHOOK_URL":                 36,
 		"INVALID_WEBHOOK_SECRET":              37,
 		"INVALID_WEBHOOK_EVENT_TYPE":          38,
@@ -702,7 +708,7 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"\x06EXITED\x10\x06\x12\r\n" +
 	"\tWITHDRAWN\x10\a\x12\v\n" +
-	"\aSLASHED\x10\b*\xb1\r\n" +
+	"\aSLASHED\x10\b*\xcc\r\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16UNSPECIFIED_ERROR_CODE\x10\x00\x12\x12\n" +
 	"\x0eINVALID_PUBKEY\x10\x01\x12\x13\n" +
@@ -735,7 +741,8 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\x12ARTIFACT_NOT_FOUND\x10!\x12\x18\n" +
 	"\x14WITHDRAWAL_NOT_FOUND\x10\"\x12\x15\n" +
 	"\x11WEBHOOK_NOT_FOUND\x10#\x12 \n" +
-	"\x1cRECONCILIATION_RUN_NOT_FOUND\x10'\x12\x17\n" +
+	"\x1cRECONCILIATION_RUN_NOT_FOUND\x10'\x12\x19\n" +
+	"\x15TRANSACTION_NOT_FOUND\x108\x12\x17\n" +
 	"\x13INVALID_WEBHOOK_URL\x10$\x12\x1a\n" +
 	"\x16INVALID_WEBHOOK_SECRET\x10%\x12\x1e\n" +
 	"\x1aINVALID_WEBHOOK_EVENT_TYPE\x10&\x12\x18\n" +
