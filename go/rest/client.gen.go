@@ -736,7 +736,8 @@ type GetValidatorsSummaryResponse struct {
 
 // ListOperationsRequest Request to list operations with optional filters.
 type ListOperationsRequest struct {
-	// ClientRequestId Filter by client-provided request ID.
+	// ClientRequestId Filter by client-provided request ID. Omit the field to not filter; sending
+	// it with a blank value returns 400 INVALID_CLIENT_REQUEST_ID.
 	ClientRequestId *string `json:"client_request_id,omitempty"`
 
 	// NextCursor Page token for pagination.
@@ -745,7 +746,8 @@ type ListOperationsRequest struct {
 	// OperationIds Filter by specific operation IDs.
 	OperationIds *[]string `json:"operation_ids,omitempty"`
 
-	// Operator Filter by operator.
+	// Operator Filter by operator. Omit the field to not filter; sending it with a blank
+	// value returns 400 INVALID_OPERATOR.
 	Operator *string `json:"operator,omitempty"`
 
 	// PageSize Maximum number of results to return (default: 50, max: 100).

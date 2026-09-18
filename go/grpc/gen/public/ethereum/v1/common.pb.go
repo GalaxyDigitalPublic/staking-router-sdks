@@ -353,6 +353,7 @@ const (
 	// number sees this comment and doesn't collide.
 	ErrorCode_INVALID_REGION      ErrorCode = 52
 	ErrorCode_INVALID_ROLLUP_TYPE ErrorCode = 53
+	ErrorCode_INVALID_PAGE_SIZE   ErrorCode = 58
 	// Not Implemented (501)
 	ErrorCode_FEATURE_NOT_SUPPORTED              ErrorCode = 60
 	ErrorCode_FEE_RECIPIENT_UPDATE_NOT_SUPPORTED ErrorCode = 61
@@ -427,6 +428,7 @@ var (
 		55: "PUBKEY_ALREADY_REGISTERED",
 		52: "INVALID_REGION",
 		53: "INVALID_ROLLUP_TYPE",
+		58: "INVALID_PAGE_SIZE",
 		60: "FEATURE_NOT_SUPPORTED",
 		61: "FEE_RECIPIENT_UPDATE_NOT_SUPPORTED",
 		70: "OPERATOR_UNAVAILABLE",
@@ -494,6 +496,7 @@ var (
 		"PUBKEY_ALREADY_REGISTERED":           55,
 		"INVALID_REGION":                      52,
 		"INVALID_ROLLUP_TYPE":                 53,
+		"INVALID_PAGE_SIZE":                   58,
 		"FEATURE_NOT_SUPPORTED":               60,
 		"FEE_RECIPIENT_UPDATE_NOT_SUPPORTED":  61,
 		"OPERATOR_UNAVAILABLE":                70,
@@ -708,7 +711,7 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"\x06EXITED\x10\x06\x12\r\n" +
 	"\tWITHDRAWN\x10\a\x12\v\n" +
-	"\aSLASHED\x10\b*\xcc\r\n" +
+	"\aSLASHED\x10\b*\xe3\r\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16UNSPECIFIED_ERROR_CODE\x10\x00\x12\x12\n" +
 	"\x0eINVALID_PUBKEY\x10\x01\x12\x13\n" +
@@ -761,7 +764,8 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\x11DUPLICATE_PUBKEYS\x103\x12\x1d\n" +
 	"\x19PUBKEY_ALREADY_REGISTERED\x107\x12\x12\n" +
 	"\x0eINVALID_REGION\x104\x12\x17\n" +
-	"\x13INVALID_ROLLUP_TYPE\x105\x12\x19\n" +
+	"\x13INVALID_ROLLUP_TYPE\x105\x12\x15\n" +
+	"\x11INVALID_PAGE_SIZE\x10:\x12\x19\n" +
 	"\x15FEATURE_NOT_SUPPORTED\x10<\x12&\n" +
 	"\"FEE_RECIPIENT_UPDATE_NOT_SUPPORTED\x10=\x12\x18\n" +
 	"\x14OPERATOR_UNAVAILABLE\x10F\x12\x15\n" +

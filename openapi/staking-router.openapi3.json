@@ -3725,12 +3725,12 @@
           "operator": {
             "type": "string",
             "example": "galaxy",
-            "description": "Filter by operator."
+            "description": "Filter by operator. Omit the field to not filter; sending it with a blank\nvalue returns 400 INVALID_OPERATOR."
           },
           "client_request_id": {
             "type": "string",
             "example": "49bf80cb-c7ca-4082-a526-8afab545cc62",
-            "description": "Filter by client-provided request ID."
+            "description": "Filter by client-provided request ID. Omit the field to not filter; sending\nit with a blank value returns 400 INVALID_CLIENT_REQUEST_ID."
           },
           "page_size": {
             "type": "integer",

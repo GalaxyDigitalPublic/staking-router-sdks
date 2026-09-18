@@ -1081,10 +1081,12 @@ type ListOperationsRequest struct {
 	Status OperationStatus `protobuf:"varint,2,opt,name=status,proto3,enum=public.ethereum.v1.OperationStatus" json:"status,omitempty"`
 	// Filter by operation type.
 	Type OperationType `protobuf:"varint,3,opt,name=type,proto3,enum=public.ethereum.v1.OperationType" json:"type,omitempty"`
-	// Filter by operator.
-	Operator string `protobuf:"bytes,4,opt,name=operator,proto3" json:"operator,omitempty"`
-	// Filter by client-provided request ID.
-	ClientRequestId string `protobuf:"bytes,5,opt,name=client_request_id,json=clientRequestId,proto3" json:"client_request_id,omitempty"`
+	// Filter by operator. Omit the field to not filter; sending it with a blank
+	// value returns 400 INVALID_OPERATOR.
+	Operator *string `protobuf:"bytes,4,opt,name=operator,proto3,oneof" json:"operator,omitempty"`
+	// Filter by client-provided request ID. Omit the field to not filter; sending
+	// it with a blank value returns 400 INVALID_CLIENT_REQUEST_ID.
+	ClientRequestId *string `protobuf:"bytes,5,opt,name=client_request_id,json=clientRequestId,proto3,oneof" json:"client_request_id,omitempty"`
 	// Maximum number of results to return (default: 50, max: 100).
 	PageSize int32 `protobuf:"varint,98,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token for pagination.
@@ -1145,15 +1147,15 @@ func (x *ListOperationsRequest) GetType() OperationType {
 }
 
 func (x *ListOperationsRequest) GetOperator() string {
-	if x != nil {
-		return x.Operator
+	if x != nil && x.Operator != nil {
+		return *x.Operator
 	}
 	return ""
 }
 
 func (x *ListOperationsRequest) GetClientRequestId() string {
-	if x != nil {
-		return x.ClientRequestId
+	if x != nil && x.ClientRequestId != nil {
+		return *x.ClientRequestId
 	}
 	return ""
 }
@@ -1296,18 +1298,20 @@ const file_public_ethereum_v1_operations_proto_rawDesc = "" +
 	"\x13GetOperationRequest\x12\x13\n" +
 	"\x02id\x18\x01 \x01(\tB\x03\xe0A\x02R\x02id\"S\n" +
 	"\x14GetOperationResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation\"\xf6\x03\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation\"\xa3\x04\n" +
 	"\x15ListOperationsRequest\x12#\n" +
 	"\roperation_ids\x18\x01 \x03(\tR\foperationIds\x12N\n" +
 	"\x06status\x18\x02 \x01(\x0e2#.public.ethereum.v1.OperationStatusB\x11\x92A\x0eJ\f\"PROCESSING\"R\x06status\x12L\n" +
-	"\x04type\x18\x03 \x01(\x0e2!.public.ethereum.v1.OperationTypeB\x15\x92A\x12J\x10\"EXIT_PRESIGNED\"R\x04type\x12)\n" +
+	"\x04type\x18\x03 \x01(\x0e2!.public.ethereum.v1.OperationTypeB\x15\x92A\x12J\x10\"EXIT_PRESIGNED\"R\x04type\x12.\n" +
 	"\boperator\x18\x04 \x01(\tB\r\x92A\n" +
-	"J\b\"galaxy\"R\boperator\x12W\n" +
-	"\x11client_request_id\x18\x05 \x01(\tB+\x92A(J&\"49bf80cb-c7ca-4082-a526-8afab545cc62\"R\x0fclientRequestId\x12$\n" +
+	"J\b\"galaxy\"H\x00R\boperator\x88\x01\x01\x12\\\n" +
+	"\x11client_request_id\x18\x05 \x01(\tB+\x92A(J&\"49bf80cb-c7ca-4082-a526-8afab545cc62\"H\x01R\x0fclientRequestId\x88\x01\x01\x12$\n" +
 	"\tpage_size\x18b \x01(\x05B\a\x92A\x04J\x0220R\bpageSize\x12\x1f\n" +
 	"\vnext_cursor\x18c \x01(\tR\n" +
 	"nextCursor:O\x92AL\n" +
-	"J*\x15ListOperationsRequest21Request to list operations with optional filters.\"\x91\x01\n" +
+	"J*\x15ListOperationsRequest21Request to list operations with optional filters.B\v\n" +
+	"\t_operatorB\x14\n" +
+	"\x12_client_request_id\"\x91\x01\n" +
 	"\x16ListOperationsResponse\x12=\n" +
 	"\n" +
 	"operations\x18\x01 \x03(\v2\x1d.public.ethereum.v1.OperationR\n" +
@@ -1407,6 +1411,7 @@ func file_public_ethereum_v1_operations_proto_init() {
 		(*OperationData_ExitData)(nil),
 		(*OperationData_FeeRecipientData)(nil),
 	}
+	file_public_ethereum_v1_operations_proto_msgTypes[13].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
