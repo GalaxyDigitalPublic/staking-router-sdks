@@ -44,22 +44,22 @@ type GetRewardsRequest struct {
 	Denomination string `protobuf:"bytes,7,opt,name=denomination,proto3" json:"denomination,omitempty"`
 	// Maximum number of results to return per page.
 	//
-	// page_size == 0 with an empty page_token is a sentinel meaning
-	// "auto-pagination": SR will transparently follow NR's next_page_token until
-	// all pages are consumed and return the complete merged result set with an
-	// empty next_page_token. Clients MUST NOT interpret 0 as "return zero results".
+	// page_size == 0 with an empty next_cursor is a sentinel meaning
+	// "auto-pagination": every page is fetched and merged server-side, and the
+	// complete result set is returned with an empty metadata.next_cursor.
+	// Clients MUST NOT interpret 0 as "return zero results".
 	//
 	// For pass-through (manual) pagination, set page_size to the desired page
-	// size and use the returned next_page_token to advance through pages. The
-	// same page_size must be supplied on all subsequent requests for the same
-	// pagination session.
+	// size and use the returned metadata.next_cursor to advance through pages.
+	// The same page_size must be supplied on all subsequent requests for the
+	// same pagination session.
 	PageSize int32 `protobuf:"varint,98,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Opaque pagination token returned by a previous response.
+	// Opaque pagination token returned by a previous response in
+	// metadata.next_cursor.
 	//
-	// Supplying a non-empty page_token activates pass-through pagination: SR makes
-	// a single NR call for that page and returns the NR-provided next_page_token
-	// wrapped in an SR envelope. Leave empty (together with page_size == 0) to
-	// request auto-pagination.
+	// Supplying a non-empty next_cursor activates pass-through pagination: a
+	// single page is returned along with the cursor for the next one. Leave empty
+	// (together with page_size == 0) to request auto-pagination.
 	NextCursor    string `protobuf:"bytes,99,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -456,7 +456,7 @@ var File_public_solana_v1_rewards_proto protoreflect.FileDescriptor
 
 const file_public_solana_v1_rewards_proto_rawDesc = "" +
 	"\n" +
-	"\x1epublic/solana/v1/rewards.proto\x12\x10public.solana.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1dpublic/solana/v1/common.proto\"\x8e\x05\n" +
+	"\x1epublic/solana/v1/rewards.proto\x12\x10public.solana.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1dpublic/solana/v1/common.proto\"\xdf\x04\n" +
 	"\x11GetRewardsRequest\x12%\n" +
 	"\x0estake_accounts\x18\x01 \x03(\tR\rstakeAccounts\x12\x1c\n" +
 	"\toperators\x18\x02 \x03(\tR\toperators\x120\n" +
@@ -470,8 +470,8 @@ const file_public_solana_v1_rewards_proto_rawDesc = "" +
 	"\x92A\aJ\x05\"SOL\"R\fdenomination\x12\x1b\n" +
 	"\tpage_size\x18b \x01(\x05R\bpageSize\x12\x1f\n" +
 	"\vnext_cursor\x18c \x01(\tR\n" +
-	"nextCursor:\x93\x02\x92A\x8f\x02\n" +
-	"\x8c\x02*\x17GetSolanaRewardsRequest2\xf0\x01Request to retrieve Solana staking reward data, proxied from the Normalised Reporting service.\n" +
+	"nextCursor:\xe4\x01\x92A\xe0\x01\n" +
+	"\xdd\x01*\x17GetSolanaRewardsRequest2\xc1\x01Request to retrieve Solana staking reward data.\n" +
 	"\n" +
 	"`stake_accounts` is **required**. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.\"\x9c\x02\n" +
 	"\x12GetRewardsResponse\x127\n" +

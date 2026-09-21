@@ -315,7 +315,7 @@
     "/v1/ethereum/rewards": {
       "post": {
         "summary": "Get validator rewards",
-        "description": "Retrieve validator reward data proxied from the Normalised Reporting service.\n\nProvide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.",
+        "description": "Retrieve validator reward data, scoped to the caller's validators.\n\nProvide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.",
         "operationId": "StakingRouterService_GetRewards",
         "responses": {
           "200": {
@@ -371,7 +371,7 @@
                     "value": {
                       "error": {
                         "code": "MISSING_REQUIRED_FIELD",
-                        "message": "identifiers is required and must not be empty"
+                        "message": "provide start_date/end_date or start_epoch/end_epoch"
                       }
                     }
                   }
@@ -379,25 +379,7 @@
               }
             }
           },
-          "502": {
-            "description": "Normalised Reporting service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {},
-                "examples": {
-                  "response": {
-                    "value": {
-                      "error": {
-                        "code": "OPERATOR_UNAVAILABLE",
-                        "message": "rewards service temporarily unavailable"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
+          "501": {
             "description": "Rewards feature not configured on this instance",
             "content": {
               "application/json": {
@@ -414,6 +396,24 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Rewards data is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "OPERATOR_UNAVAILABLE",
+                        "message": "rewards service temporarily unavailable"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -424,7 +424,7 @@
               }
             }
           },
-          "description": "Request to retrieve validator reward data, proxied from the Normalised Reporting service.\n\n`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
+          "description": "Request to retrieve validator reward data.\n\n`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
           "required": true
         },
         "tags": [
@@ -1867,7 +1867,7 @@
     "/v1/solana/rewards": {
       "post": {
         "summary": "Get Solana staking rewards",
-        "description": "Retrieve Solana staking reward data proxied from the Normalised Reporting service.\n\nProvide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.",
+        "description": "Retrieve Solana staking reward data, scoped to the caller's stake accounts.\n\nProvide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.",
         "operationId": "SolanaStakingRouterService_GetRewards",
         "responses": {
           "200": {
@@ -1949,8 +1949,8 @@
               }
             }
           },
-          "502": {
-            "description": "Normalised Reporting service unavailable",
+          "503": {
+            "description": "Rewards data is temporarily unavailable",
             "content": {
               "application/json": {
                 "schema": {},
@@ -1976,7 +1976,7 @@
               }
             }
           },
-          "description": "Request to retrieve Solana staking reward data, proxied from the Normalised Reporting service.\n\n`stake_accounts` is **required**. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
+          "description": "Request to retrieve Solana staking reward data.\n\n`stake_accounts` is **required**. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
           "required": true
         },
         "tags": [
@@ -3617,7 +3617,7 @@
             "description": "Pagination token from previous response."
           }
         },
-        "description": "Request to retrieve validator reward data, proxied from the Normalised Reporting service.\n\n`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
+        "description": "Request to retrieve validator reward data.\n\n`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
         "title": "GetRewardsRequest"
       },
       "GetRewardsResponse": {
@@ -5504,14 +5504,14 @@
           "page_size": {
             "type": "integer",
             "format": "int32",
-            "description": "Maximum number of results to return per page.\n\npage_size == 0 with an empty page_token is a sentinel meaning\n\"auto-pagination\": SR will transparently follow NR's next_page_token until\nall pages are consumed and return the complete merged result set with an\nempty next_page_token. Clients MUST NOT interpret 0 as \"return zero results\".\n\nFor pass-through (manual) pagination, set page_size to the desired page\nsize and use the returned next_page_token to advance through pages. The\nsame page_size must be supplied on all subsequent requests for the same\npagination session."
+            "description": "Maximum number of results to return per page.\n\npage_size == 0 with an empty next_cursor is a sentinel meaning\n\"auto-pagination\": every page is fetched and merged server-side, and the\ncomplete result set is returned with an empty metadata.next_cursor.\nClients MUST NOT interpret 0 as \"return zero results\".\n\nFor pass-through (manual) pagination, set page_size to the desired page\nsize and use the returned metadata.next_cursor to advance through pages.\nThe same page_size must be supplied on all subsequent requests for the\nsame pagination session."
           },
           "next_cursor": {
             "type": "string",
-            "description": "Opaque pagination token returned by a previous response.\n\nSupplying a non-empty page_token activates pass-through pagination: SR makes\na single NR call for that page and returns the NR-provided next_page_token\nwrapped in an SR envelope. Leave empty (together with page_size == 0) to\nrequest auto-pagination."
+            "description": "Opaque pagination token returned by a previous response in\nmetadata.next_cursor.\n\nSupplying a non-empty next_cursor activates pass-through pagination: a\nsingle page is returned along with the cursor for the next one. Leave empty\n(together with page_size == 0) to request auto-pagination."
           }
         },
-        "description": "Request to retrieve Solana staking reward data, proxied from the Normalised Reporting service.\n\n`stake_accounts` is **required**. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
+        "description": "Request to retrieve Solana staking reward data.\n\n`stake_accounts` is **required**. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
         "title": "GetSolanaRewardsRequest"
       },
       "public.solana.v1.GetRewardsResponse": {

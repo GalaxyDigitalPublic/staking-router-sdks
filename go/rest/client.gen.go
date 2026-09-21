@@ -640,7 +640,7 @@ type GetOperatorResponse struct {
 	Operator *Operator `json:"operator,omitempty"`
 }
 
-// GetRewardsRequest Request to retrieve validator reward data, proxied from the Normalised Reporting service.
+// GetRewardsRequest Request to retrieve validator reward data.
 //
 // `pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.
 type GetRewardsRequest struct {
@@ -1869,7 +1869,7 @@ type PublicSolanaV1GalaxySolanaParams struct {
 	Participant *string `json:"participant,omitempty"`
 }
 
-// PublicSolanaV1GetRewardsRequest Request to retrieve Solana staking reward data, proxied from the Normalised Reporting service.
+// PublicSolanaV1GetRewardsRequest Request to retrieve Solana staking reward data.
 //
 // `stake_accounts` is **required**. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.
 type PublicSolanaV1GetRewardsRequest struct {
@@ -1883,12 +1883,12 @@ type PublicSolanaV1GetRewardsRequest struct {
 	// Note: 0 is treated as "not set".
 	EndEpoch *string `json:"end_epoch,omitempty"`
 
-	// NextCursor Opaque pagination token returned by a previous response.
+	// NextCursor Opaque pagination token returned by a previous response in
+	// metadata.next_cursor.
 	//
-	// Supplying a non-empty page_token activates pass-through pagination: SR makes
-	// a single NR call for that page and returns the NR-provided next_page_token
-	// wrapped in an SR envelope. Leave empty (together with page_size == 0) to
-	// request auto-pagination.
+	// Supplying a non-empty next_cursor activates pass-through pagination: a
+	// single page is returned along with the cursor for the next one. Leave empty
+	// (together with page_size == 0) to request auto-pagination.
 	NextCursor *string `json:"next_cursor,omitempty"`
 
 	// Operators Optional. Filter by node operator name (e.g., "figment", "galaxy").
@@ -1897,15 +1897,15 @@ type PublicSolanaV1GetRewardsRequest struct {
 
 	// PageSize Maximum number of results to return per page.
 	//
-	// page_size == 0 with an empty page_token is a sentinel meaning
-	// "auto-pagination": SR will transparently follow NR's next_page_token until
-	// all pages are consumed and return the complete merged result set with an
-	// empty next_page_token. Clients MUST NOT interpret 0 as "return zero results".
+	// page_size == 0 with an empty next_cursor is a sentinel meaning
+	// "auto-pagination": every page is fetched and merged server-side, and the
+	// complete result set is returned with an empty metadata.next_cursor.
+	// Clients MUST NOT interpret 0 as "return zero results".
 	//
 	// For pass-through (manual) pagination, set page_size to the desired page
-	// size and use the returned next_page_token to advance through pages. The
-	// same page_size must be supplied on all subsequent requests for the same
-	// pagination session.
+	// size and use the returned metadata.next_cursor to advance through pages.
+	// The same page_size must be supplied on all subsequent requests for the
+	// same pagination session.
 	PageSize *int32 `json:"page_size,omitempty"`
 
 	// StakeAccounts Required. Solana stake account addresses to query rewards for. Maximum 100 entries.
@@ -6386,7 +6386,7 @@ type StakingRouterServiceGetRewardsResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *GetRewardsResponse
 	JSON400      *interface{}
-	JSON502      *interface{}
+	JSON501      *interface{}
 	JSON503      *interface{}
 }
 
@@ -6830,7 +6830,7 @@ type SolanaStakingRouterServiceGetRewardsResponse struct {
 	JSON200      *PublicSolanaV1GetRewardsResponse
 	JSON400      *interface{}
 	JSON501      *interface{}
-	JSON502      *interface{}
+	JSON503      *interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -7945,12 +7945,12 @@ func ParseStakingRouterServiceGetRewardsResponse(rsp *http.Response) (*StakingRo
 		}
 		response.JSON400 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
 		var dest interface{}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON502 = &dest
+		response.JSON501 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
 		var dest interface{}
@@ -8621,12 +8621,12 @@ func ParseSolanaStakingRouterServiceGetRewardsResponse(rsp *http.Response) (*Sol
 		}
 		response.JSON501 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
 		var dest interface{}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON502 = &dest
+		response.JSON503 = &dest
 
 	}
 

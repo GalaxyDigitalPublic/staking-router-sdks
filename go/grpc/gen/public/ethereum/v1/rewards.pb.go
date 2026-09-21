@@ -474,7 +474,7 @@ var File_public_ethereum_v1_rewards_proto protoreflect.FileDescriptor
 
 const file_public_ethereum_v1_rewards_proto_rawDesc = "" +
 	"\n" +
-	" public/ethereum/v1/rewards.proto\x12\x12public.ethereum.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\xa1\x06\n" +
+	" public/ethereum/v1/rewards.proto\x12\x12public.ethereum.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\xf2\x05\n" +
 	"\x11GetRewardsRequest\x12\x18\n" +
 	"\apubkeys\x18\x01 \x03(\tR\apubkeys\x12\x1c\n" +
 	"\toperators\x18\x02 \x03(\tR\toperators\x120\n" +
@@ -488,8 +488,8 @@ const file_public_ethereum_v1_rewards_proto_rawDesc = "" +
 	"\x92A\aJ\x05\"ETH\"R\fdenomination\x12%\n" +
 	"\tpage_size\x18b \x01(\x05B\b\x92A\x05J\x03100R\bpageSize\x12\x1f\n" +
 	"\vnext_cursor\x18c \x01(\tR\n" +
-	"nextCursor:\xa3\x03\x92A\x9f\x03\n" +
-	"\x9c\x03*\x11GetRewardsRequest2\x86\x03Request to retrieve validator reward data, proxied from the Normalised Reporting service.\n" +
+	"nextCursor:\xf4\x02\x92A\xf0\x02\n" +
+	"\xed\x02*\x11GetRewardsRequest2\xd7\x02Request to retrieve validator reward data.\n" +
 	"\n" +
 	"`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.\"\xa4\x02\n" +
 	"\x12GetRewardsResponse\x129\n" +

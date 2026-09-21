@@ -769,7 +769,7 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x06pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x06pubkey\x127\n" +
 	"\x15fee_recipient_address\x18\x02 \x01(\tB\x03\xe0A\x02R\x13feeRecipientAddress\"Y\n" +
 	"\x1aUpdateFeeRecipientResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\xbf\xc3\x01\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\xbb\xc3\x01\n" +
 	"\x14StakingRouterService\x12\x9d\x05\n" +
 	"\fGetOperation\x12'.public.ethereum.v1.GetOperationRequest\x1a(.public.ethereum.v1.GetOperationResponse\"\xb9\x04\x92A\x91\x04\n" +
 	"\n" +
@@ -1043,25 +1043,25 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x14Ethereum Withdrawals\x12\x10List withdrawals\x1a2Query historical withdrawal events for validators.J\xbb\x01\n" +
 	"\x03200\x12\xb3\x01\n" +
 	"\x13List of withdrawals\"\x9b\x01\n" +
-	"\x10application/json\x12\x86\x01{\"withdrawals\":[{\"pubkey\":\"0x8a2f5c3b...\",\"validator_index\":\"123456\",\"amount_gwei\":\"32000000000\",\"timestamp\":\"2024-01-01T00:00:00Z\"}]}\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/ethereum/withdrawals\x12\xa9\n" +
+	"\x10application/json\x12\x86\x01{\"withdrawals\":[{\"pubkey\":\"0x8a2f5c3b...\",\"validator_index\":\"123456\",\"amount_gwei\":\"32000000000\",\"timestamp\":\"2024-01-01T00:00:00Z\"}]}\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/ethereum/withdrawals\x12\xa5\n" +
 	"\n" +
 	"\n" +
-	"GetRewards\x12%.public.ethereum.v1.GetRewardsRequest\x1a&.public.ethereum.v1.GetRewardsResponse\"\xcb\t\x92A\xa8\t\n" +
-	"\x10Ethereum Rewards\x12\x15Get validator rewards\x1a\xd8\x01Retrieve validator reward data proxied from the Normalised Reporting service.\n" +
+	"GetRewards\x12%.public.ethereum.v1.GetRewardsRequest\x1a&.public.ethereum.v1.GetRewardsResponse\"\xc7\t\x92A\xa4\t\n" +
+	"\x10Ethereum Rewards\x12\x15Get validator rewards\x1a\xcd\x01Retrieve validator reward data, scoped to the caller's validators.\n" +
 	"\n" +
 	"Provide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.J\x9b\x03\n" +
 	"\x03200\x12\x93\x03\n" +
 	"\"Reward data retrieved successfully\"\xec\x02\n" +
-	"\x10application/json\x12\xd7\x02{\"rewards\":[{\"pubkey\":\"0x8a2f5c3b...\",\"operator\":\"galaxy\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"epoch\":300000,\"rewards\":[{\"amount\":\"0.001\",\"denomination\":\"ETH\",\"type\":\"consensus\"}]}],\"total_rewards\":{\"amount\":\"1.5\",\"denomination\":\"ETH\"},\"period_total_rewards\":{\"amount\":\"0.1\",\"denomination\":\"ETH\"},\"metadata\":{\"next_cursor\":\"\",\"total_count\":42}}J\x9f\x01\n" +
-	"\x03400\x12\x97\x01\n" +
-	"\x1aInvalid request parameters\"y\n" +
-	"\x10application/json\x12e{\"error\":{\"code\":\"MISSING_REQUIRED_FIELD\",\"message\":\"identifiers is required and must not be empty\"}}J\xa5\x01\n" +
-	"\x03502\x12\x9d\x01\n" +
-	"(Normalised Reporting service unavailable\"q\n" +
-	"\x10application/json\x12]{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"rewards service temporarily unavailable\"}}J\xb9\x01\n" +
-	"\x03503\x12\xb1\x01\n" +
+	"\x10application/json\x12\xd7\x02{\"rewards\":[{\"pubkey\":\"0x8a2f5c3b...\",\"operator\":\"galaxy\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"epoch\":300000,\"rewards\":[{\"amount\":\"0.001\",\"denomination\":\"ETH\",\"type\":\"consensus\"}]}],\"total_rewards\":{\"amount\":\"1.5\",\"denomination\":\"ETH\"},\"period_total_rewards\":{\"amount\":\"0.1\",\"denomination\":\"ETH\"},\"metadata\":{\"next_cursor\":\"\",\"total_count\":42}}J\xa7\x01\n" +
+	"\x03400\x12\x9f\x01\n" +
+	"\x1aInvalid request parameters\"\x80\x01\n" +
+	"\x10application/json\x12l{\"error\":{\"code\":\"MISSING_REQUIRED_FIELD\",\"message\":\"provide start_date/end_date or start_epoch/end_epoch\"}}J\xb9\x01\n" +
+	"\x03501\x12\xb1\x01\n" +
 	"/Rewards feature not configured on this instance\"~\n" +
-	"\x10application/json\x12j{\"error\":{\"code\":\"FEATURE_NOT_SUPPORTED\",\"message\":\"rewards endpoint is not configured on this instance\"}}\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/ethereum/rewardsB\xfd\x03\x92A\x8a\x02\x12\x99\x01\n" +
+	"\x10application/json\x12j{\"error\":{\"code\":\"FEATURE_NOT_SUPPORTED\",\"message\":\"rewards endpoint is not configured on this instance\"}}J\xa4\x01\n" +
+	"\x03503\x12\x9c\x01\n" +
+	"'Rewards data is temporarily unavailable\"q\n" +
+	"\x10application/json\x12]{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"rewards service temporarily unavailable\"}}\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/ethereum/rewardsB\xfd\x03\x92A\x8a\x02\x12\x99\x01\n" +
 	"\x12Staking Router API\x12TUnified staking orchestration API for Ethereum validators and Solana stake accounts.\"(\n" +
 	"\x0eGalaxy Digital\x12\x16https://www.galaxy.com2\x031.0*\x01\x022\x10application/json:\x10application/jsonZ7\n" +
 	"5\n" +

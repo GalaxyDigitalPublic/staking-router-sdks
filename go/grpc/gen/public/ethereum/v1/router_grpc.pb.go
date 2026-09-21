@@ -93,7 +93,7 @@ type StakingRouterServiceClient interface {
 	GetFees(ctx context.Context, in *GetFeesRequest, opts ...grpc.CallOption) (*GetFeesResponse, error)
 	// ListWithdrawals queries historical withdrawal events.
 	ListWithdrawals(ctx context.Context, in *ListWithdrawalsRequest, opts ...grpc.CallOption) (*ListWithdrawalsResponse, error)
-	// GetRewards retrieves validator reward data from the Normalised Reporting service.
+	// GetRewards retrieves validator reward data for the caller's validators.
 	GetRewards(ctx context.Context, in *GetRewardsRequest, opts ...grpc.CallOption) (*GetRewardsResponse, error)
 }
 
@@ -366,7 +366,7 @@ type StakingRouterServiceServer interface {
 	GetFees(context.Context, *GetFeesRequest) (*GetFeesResponse, error)
 	// ListWithdrawals queries historical withdrawal events.
 	ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error)
-	// GetRewards retrieves validator reward data from the Normalised Reporting service.
+	// GetRewards retrieves validator reward data for the caller's validators.
 	GetRewards(context.Context, *GetRewardsRequest) (*GetRewardsResponse, error)
 	mustEmbedUnimplementedStakingRouterServiceServer()
 }

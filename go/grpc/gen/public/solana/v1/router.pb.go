@@ -26,7 +26,7 @@ var File_public_solana_v1_router_proto protoreflect.FileDescriptor
 
 const file_public_solana_v1_router_proto_rawDesc = "" +
 	"\n" +
-	"\x1dpublic/solana/v1/router.proto\x12\x10public.solana.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a#public/solana/v1/transactions.proto\x1a\x1epublic/solana/v1/rewards.proto\x1a\x1fpublic/solana/v1/accounts.proto\x1a public/solana/v1/addresses.proto2\x96y\n" +
+	"\x1dpublic/solana/v1/router.proto\x12\x10public.solana.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a#public/solana/v1/transactions.proto\x1a\x1epublic/solana/v1/rewards.proto\x1a\x1fpublic/solana/v1/accounts.proto\x1a public/solana/v1/addresses.proto2\x8ey\n" +
 	"\x1aSolanaStakingRouterService\x12\xa5\f\n" +
 	"\x12CreateStakeAccount\x12+.public.solana.v1.CreateStakeAccountRequest\x1a,.public.solana.v1.CreateStakeAccountResponse\"\xb3\v\x92A\xff\n" +
 	"\n" +
@@ -92,11 +92,11 @@ const file_public_solana_v1_router_proto_rawDesc = "" +
 	"\x15GetSolanaStakeAccount\x12..public.solana.v1.GetSolanaStakeAccountRequest\x1a/.public.solana.v1.GetSolanaStakeAccountResponse\"\x9b\x01\x92Am\n" +
 	"\x0fSolana Accounts\x12\x11Get stake account\x1aGReturn on-chain state for a single stake account tracked by the caller.\x82\xd3\xe4\x93\x02%\x12#/v1/solana/accounts/{stake_account}\x12\x99\x02\n" +
 	"\x11RegisterAddresses\x12*.public.solana.v1.RegisterAddressesRequest\x1a+.public.solana.v1.RegisterAddressesResponse\"\xaa\x01\x92A\x87\x01\n" +
-	"\x10Solana Addresses\x12!Register addresses for monitoring\x1aPRegister stake account addresses with a node operator for delegation monitoring.\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/solana/addresses\x12\xb3\n" +
+	"\x10Solana Addresses\x12!Register addresses for monitoring\x1aPRegister stake account addresses with a node operator for delegation monitoring.\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/solana/addresses\x12\xab\n" +
 	"\n" +
 	"\n" +
-	"GetRewards\x12#.public.solana.v1.GetRewardsRequest\x1a$.public.solana.v1.GetRewardsResponse\"\xd9\t\x92A\xb8\t\n" +
-	"\x0eSolana Rewards\x12\x1aGet Solana staking rewards\x1a\xdd\x01Retrieve Solana staking reward data proxied from the Normalised Reporting service.\n" +
+	"GetRewards\x12#.public.solana.v1.GetRewardsRequest\x1a$.public.solana.v1.GetRewardsResponse\"\xd1\t\x92A\xb0\t\n" +
+	"\x0eSolana Rewards\x12\x1aGet Solana staking rewards\x1a\xd6\x01Retrieve Solana staking reward data, scoped to the caller's stake accounts.\n" +
 	"\n" +
 	"Provide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.J\xa0\x03\n" +
 	"\x03200\x12\x98\x03\n" +
@@ -107,9 +107,9 @@ const file_public_solana_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12h{\"error\":{\"code\":\"MISSING_REQUIRED_FIELD\",\"message\":\"stake_accounts is required and must not be empty\"}}J\xb9\x01\n" +
 	"\x03501\x12\xb1\x01\n" +
 	"/Rewards feature not configured on this instance\"~\n" +
-	"\x10application/json\x12j{\"error\":{\"code\":\"FEATURE_NOT_SUPPORTED\",\"message\":\"rewards endpoint is not configured on this instance\"}}J\xa5\x01\n" +
-	"\x03502\x12\x9d\x01\n" +
-	"(Normalised Reporting service unavailable\"q\n" +
+	"\x10application/json\x12j{\"error\":{\"code\":\"FEATURE_NOT_SUPPORTED\",\"message\":\"rewards endpoint is not configured on this instance\"}}J\xa4\x01\n" +
+	"\x03503\x12\x9c\x01\n" +
+	"'Rewards data is temporarily unavailable\"q\n" +
 	"\x10application/json\x12]{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"rewards service temporarily unavailable\"}}\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/solana/rewardsB\xe1\x03\x92A\xfc\x01\x12\x8b\x01\n" +
 	"\x19Solana Staking Router API\x12?Native Solana staking transaction construction and rewards API.\"(\n" +
 	"\x0eGalaxy Digital\x12\x16https://www.galaxy.com2\x031.0*\x01\x022\x10application/json:\x10application/jsonZ7\n" +

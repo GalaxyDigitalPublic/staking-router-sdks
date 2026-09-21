@@ -75,7 +75,7 @@ type SolanaStakingRouterServiceClient interface {
 	GetSolanaStakeAccount(ctx context.Context, in *GetSolanaStakeAccountRequest, opts ...grpc.CallOption) (*GetSolanaStakeAccountResponse, error)
 	// RegisterAddresses registers stake accounts for monitoring with a node operator.
 	RegisterAddresses(ctx context.Context, in *RegisterAddressesRequest, opts ...grpc.CallOption) (*RegisterAddressesResponse, error)
-	// GetRewards retrieves Solana staking reward data from the Normalised Reporting service.
+	// GetRewards retrieves Solana staking reward data for the caller's stake accounts.
 	GetRewards(ctx context.Context, in *GetRewardsRequest, opts ...grpc.CallOption) (*GetRewardsResponse, error)
 }
 
@@ -285,7 +285,7 @@ type SolanaStakingRouterServiceServer interface {
 	GetSolanaStakeAccount(context.Context, *GetSolanaStakeAccountRequest) (*GetSolanaStakeAccountResponse, error)
 	// RegisterAddresses registers stake accounts for monitoring with a node operator.
 	RegisterAddresses(context.Context, *RegisterAddressesRequest) (*RegisterAddressesResponse, error)
-	// GetRewards retrieves Solana staking reward data from the Normalised Reporting service.
+	// GetRewards retrieves Solana staking reward data for the caller's stake accounts.
 	GetRewards(context.Context, *GetRewardsRequest) (*GetRewardsResponse, error)
 	mustEmbedUnimplementedSolanaStakingRouterServiceServer()
 }
