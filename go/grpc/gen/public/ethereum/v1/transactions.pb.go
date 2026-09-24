@@ -414,7 +414,9 @@ type WithdrawInput struct {
 	// Amount to withdraw in Gwei. 0 = full withdrawal. uint64 supports ~18 billion ETH (~150x total supply).
 	AmountGwei uint64 `protobuf:"varint,2,opt,name=amount_gwei,json=amountGwei,proto3" json:"amount_gwei,omitempty"`
 	// Withdrawal address (the address that must sign, must match the validator's withdrawal credentials).
-	// If omitted, the unsigned transaction will have empty from and signers fields.
+	// Optional: when omitted it is resolved from the validator's on-chain
+	// withdrawal credentials. Supply it to have the request rejected if it does
+	// not match those credentials.
 	WithdrawalAddress string `protobuf:"bytes,3,opt,name=withdrawal_address,json=withdrawalAddress,proto3" json:"withdrawal_address,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
@@ -699,7 +701,9 @@ type ConsolidationInput struct {
 	// Target validator public key (will receive balance).
 	TargetPubkey string `protobuf:"bytes,2,opt,name=target_pubkey,json=targetPubkey,proto3" json:"target_pubkey,omitempty"`
 	// Withdrawal address (the address that must sign, must match the source validator's withdrawal credentials).
-	// If omitted, the unsigned transaction will have empty from and signers fields.
+	// Optional: when omitted it is resolved from the source validator's on-chain
+	// withdrawal credentials. Supply it to have the request rejected if it does
+	// not match those credentials.
 	WithdrawalAddress string `protobuf:"bytes,3,opt,name=withdrawal_address,json=withdrawalAddress,proto3" json:"withdrawal_address,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
@@ -938,16 +942,38 @@ type UnsignedTransactionPayload struct {
 	ChainId uint64 `protobuf:"varint,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// Transaction type (always 2 for EIP-1559).
 	Type int32 `protobuf:"varint,2,opt,name=type,proto3" json:"type,omitempty"`
-	// From address (withdrawal address, omitted for TOPUP).
+	// From address. Resolved from the validator's on-chain withdrawal
+	// credentials for withdraw and consolidate. Empty for top-ups, which any
+	// address may fund.
 	From string `protobuf:"bytes,3,opt,name=from,proto3" json:"from,omitempty"`
 	// Target contract address.
 	To string `protobuf:"bytes,4,opt,name=to,proto3" json:"to,omitempty"`
-	// Transaction value in wei.
+	// Transaction value in wei, as a decimal string.
+	//
+	// What it pays for differs by endpoint: for a top-up it is the deposit
+	// amount; for withdraw and consolidate it is the EIP-7002/EIP-7251 request
+	// fee the precompile charges, and the withdrawal or consolidation amount is
+	// encoded in `data` instead. Read `fee_wei` to see the fee component
+	// explicitly rather than inferring it from the endpoint.
 	Value string `protobuf:"bytes,5,opt,name=value,proto3" json:"value,omitempty"`
 	// Encoded calldata for the contract call.
 	Data string `protobuf:"bytes,6,opt,name=data,proto3" json:"data,omitempty"`
 	// Gas limit for the transaction (in gas units).
-	GasLimit      uint64 `protobuf:"varint,7,opt,name=gas_limit,json=gasLimit,proto3" json:"gas_limit,omitempty"`
+	GasLimit uint64 `protobuf:"varint,7,opt,name=gas_limit,json=gasLimit,proto3" json:"gas_limit,omitempty"`
+	// Protocol request fee in wei, as a decimal string, for endpoints that call
+	// a precompile charging one: withdraw (EIP-7002) and consolidate
+	// (EIP-7251). It duplicates `value` on those endpoints.
+	//
+	// This is the same *quantity* /ethereum/fees reports for the corresponding
+	// operation type, but read independently: this field comes from an execution
+	// layer precompile read, /ethereum/fees from the node operator's fee API.
+	// They are two reads of a moving value and can disagree at any instant, and
+	// /ethereum/fees types its fee_wei as a uint64 rather than a string — so the
+	// two fields are not interchangeable for a gRPC client.
+	//
+	// Empty where no fee applies, such as top-ups, where `value` is the deposit
+	// amount.
+	FeeWei        string `protobuf:"bytes,8,opt,name=fee_wei,json=feeWei,proto3" json:"fee_wei,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1029,6 +1055,13 @@ func (x *UnsignedTransactionPayload) GetGasLimit() uint64 {
 		return x.GasLimit
 	}
 	return 0
+}
+
+func (x *UnsignedTransactionPayload) GetFeeWei() string {
+	if x != nil {
+		return x.FeeWei
+	}
+	return ""
 }
 
 // BroadcastTransactionRequest submits a signed RLP-encoded transaction to the network.
@@ -1310,7 +1343,7 @@ const file_public_ethereum_v1_transactions_proto_rawDesc = "" +
 	"\x1cConsolidateTransactionInputs\x12#\n" +
 	"\rsource_pubkey\x18\x01 \x01(\tR\fsourcePubkey\x12#\n" +
 	"\rtarget_pubkey\x18\x02 \x01(\tR\ftargetPubkey\x12)\n" +
-	"\x10contract_address\x18\x03 \x01(\tR\x0fcontractAddress\"\xca\x01\n" +
+	"\x10contract_address\x18\x03 \x01(\tR\x0fcontractAddress\"\xe3\x01\n" +
 	"\x1aUnsignedTransactionPayload\x12\x1e\n" +
 	"\bchain_id\x18\x01 \x01(\x04B\x03\xe0A\x02R\achainId\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\x05R\x04type\x12\x12\n" +
@@ -1318,7 +1351,8 @@ const file_public_ethereum_v1_transactions_proto_rawDesc = "" +
 	"\x02to\x18\x04 \x01(\tB\x03\xe0A\x02R\x02to\x12\x14\n" +
 	"\x05value\x18\x05 \x01(\tR\x05value\x12\x17\n" +
 	"\x04data\x18\x06 \x01(\tB\x03\xe0A\x02R\x04data\x12 \n" +
-	"\tgas_limit\x18\a \x01(\x04B\x03\xe0A\x02R\bgasLimit\"\xc0\x03\n" +
+	"\tgas_limit\x18\a \x01(\x04B\x03\xe0A\x02R\bgasLimit\x12\x17\n" +
+	"\afee_wei\x18\b \x01(\tR\x06feeWei\"\xc0\x03\n" +
 	"\x1bBroadcastTransactionRequest\x12`\n" +
 	"\x0fraw_transaction\x18\x01 \x01(\tB7\x92A1J/\"0x02f87c01018459682f008507af2c9f6682520894...\"\xe0A\x02R\x0erawTransaction:\xbe\x02\x92A\xba\x02\n" +
 	"\xb7\x02*\x1bBroadcastTransactionRequest2\x97\x02Submit a signed EIP-1559 transaction to the Ethereum network.\n" +
