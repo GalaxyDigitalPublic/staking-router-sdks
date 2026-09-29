@@ -862,7 +862,13 @@ type GetValidatorsSummaryResponse struct {
 	TotalValidators int64 `protobuf:"varint,1,opt,name=total_validators,json=totalValidators,proto3" json:"total_validators,omitempty"`
 	// Count by status.
 	ByStatus []*StatusCount `protobuf:"bytes,4,rep,name=by_status,json=byStatus,proto3" json:"by_status,omitempty"`
-	// Count by operator.
+	// Count by operator. Every operator currently available to the caller is
+	// listed, with a count of 0 where it has no validators (with the operator
+	// filter, just that operator). A validator whose operator has been disabled
+	// for the caller, or is not offered by this deployment, is still counted in
+	// total_validators, by_status and by_withdrawal_credentials_type but is not
+	// attributed here, so the counts in this list can sum to less than
+	// total_validators.
 	ByOperator []*OperatorCount `protobuf:"bytes,5,rep,name=by_operator,json=byOperator,proto3" json:"by_operator,omitempty"`
 	// Count by withdrawal credentials type.
 	ByWithdrawalCredentialsType []*CredentialsTypeCount `protobuf:"bytes,6,rep,name=by_withdrawal_credentials_type,json=byWithdrawalCredentialsType,proto3" json:"by_withdrawal_credentials_type,omitempty"`
