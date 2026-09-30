@@ -257,7 +257,9 @@ type ConsolidationInput struct {
 	TargetPubkey string `json:"target_pubkey"`
 
 	// WithdrawalAddress Withdrawal address (the address that must sign, must match the source validator's withdrawal credentials).
-	// If omitted, the unsigned transaction will have empty from and signers fields.
+	// Optional: when omitted it is resolved from the source validator's on-chain
+	// withdrawal credentials. Supply it to have the request rejected if it does
+	// not match those credentials.
 	WithdrawalAddress *string `json:"withdrawal_address,omitempty"`
 }
 
@@ -642,7 +644,7 @@ type GetOperatorResponse struct {
 
 // GetRewardsRequest Request to retrieve validator reward data.
 //
-// `pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.
+// `pubkeys` is **required** (1-100 entries). Rewards are returned only for the specified validators. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.
 type GetRewardsRequest struct {
 	// Denomination Denomination for reward amounts: "ETH" (default) or "wei".
 	Denomination *string `json:"denomination,omitempty"`
@@ -657,15 +659,10 @@ type GetRewardsRequest struct {
 	// NextCursor Pagination token from previous response.
 	NextCursor *string `json:"next_cursor,omitempty"`
 
-	// Operators Optional. Filter by node operator name (e.g., "galaxy", "figment").
-	// Multiple operators may be specified.
-	Operators *[]string `json:"operators,omitempty"`
-
 	// PageSize Maximum number of results to return.
 	PageSize *int32 `json:"page_size,omitempty"`
 
-	// Pubkeys Optional. Validator BLS public keys (0x-prefixed hex) to query rewards for. Maximum 100 entries.
-	// When omitted, rewards for all tenant validators are returned.
+	// Pubkeys Required. Validator BLS public keys (0x-prefixed hex) to query rewards for. 1-100 entries.
 	Pubkeys *[]string `json:"pubkeys,omitempty"`
 
 	// StartDate Start date (YYYY-MM-DD). Use with end_date for daily-rollup mode.
@@ -721,7 +718,13 @@ type GetValidatorResponse struct {
 
 // GetValidatorsSummaryResponse GetValidatorsSummaryResponse is the response containing validator summary.
 type GetValidatorsSummaryResponse struct {
-	// ByOperator Count by operator.
+	// ByOperator Count by operator. Every operator currently available to the caller is
+	// listed, with a count of 0 where it has no validators (with the operator
+	// filter, just that operator). A validator whose operator has been disabled
+	// for the caller, or is not offered by this deployment, is still counted in
+	// total_validators, by_status and by_withdrawal_credentials_type but is not
+	// attributed here, so the counts in this list can sum to less than
+	// total_validators.
 	ByOperator *[]OperatorCount `json:"by_operator,omitempty"`
 
 	// ByStatus Count by status.
@@ -1166,7 +1169,24 @@ type UnsignedTransactionPayload struct {
 	// Data Encoded calldata for the contract call.
 	Data string `json:"data"`
 
-	// From From address (withdrawal address, omitted for TOPUP).
+	// FeeWei Protocol request fee in wei, as a decimal string, for endpoints that call
+	// a precompile charging one: withdraw (EIP-7002) and consolidate
+	// (EIP-7251). It duplicates `value` on those endpoints.
+	//
+	// This is the same *quantity* /ethereum/fees reports for the corresponding
+	// operation type, but read independently: this field comes from an execution
+	// layer precompile read, /ethereum/fees from the node operator's fee API.
+	// They are two reads of a moving value and can disagree at any instant, and
+	// /ethereum/fees types its fee_wei as a uint64 rather than a string — so the
+	// two fields are not interchangeable for a gRPC client.
+	//
+	// Empty where no fee applies, such as top-ups, where `value` is the deposit
+	// amount.
+	FeeWei *string `json:"fee_wei,omitempty"`
+
+	// From From address. Resolved from the validator's on-chain withdrawal
+	// credentials for withdraw and consolidate. Empty for top-ups, which any
+	// address may fund.
 	From *string `json:"from,omitempty"`
 
 	// GasLimit Gas limit for the transaction (in gas units).
@@ -1178,7 +1198,13 @@ type UnsignedTransactionPayload struct {
 	// Type Transaction type (always 2 for EIP-1559).
 	Type *int32 `json:"type,omitempty"`
 
-	// Value Transaction value in wei.
+	// Value Transaction value in wei, as a decimal string.
+	//
+	// What it pays for differs by endpoint: for a top-up it is the deposit
+	// amount; for withdraw and consolidate it is the EIP-7002/EIP-7251 request
+	// fee the precompile charges, and the withdrawal or consolidation amount is
+	// encoded in `data` instead. Read `fee_wei` to see the fee component
+	// explicitly rather than inferring it from the endpoint.
 	Value *string `json:"value,omitempty"`
 }
 
@@ -1395,7 +1421,9 @@ type WithdrawInput struct {
 	Pubkey string `json:"pubkey"`
 
 	// WithdrawalAddress Withdrawal address (the address that must sign, must match the validator's withdrawal credentials).
-	// If omitted, the unsigned transaction will have empty from and signers fields.
+	// Optional: when omitted it is resolved from the validator's on-chain
+	// withdrawal credentials. Supply it to have the request rejected if it does
+	// not match those credentials.
 	WithdrawalAddress *string `json:"withdrawal_address,omitempty"`
 }
 

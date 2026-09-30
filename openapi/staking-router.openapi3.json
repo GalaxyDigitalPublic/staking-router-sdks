@@ -424,7 +424,7 @@
               }
             }
           },
-          "description": "Request to retrieve validator reward data.\n\n`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
+          "description": "Request to retrieve validator reward data.\n\n`pubkeys` is **required** (1-100 entries). Rewards are returned only for the specified validators. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
           "required": true
         },
         "tags": [
@@ -2906,7 +2906,7 @@
           "withdrawal_address": {
             "type": "string",
             "example": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-            "description": "Withdrawal address (the address that must sign, must match the source validator's withdrawal credentials).\nIf omitted, the unsigned transaction will have empty from and signers fields."
+            "description": "Withdrawal address (the address that must sign, must match the source validator's withdrawal credentials).\nOptional: when omitted it is resolved from the source validator's on-chain\nwithdrawal credentials. Supply it to have the request rejected if it does\nnot match those credentials."
           }
         },
         "description": "ConsolidationInput specifies a source and target validator for consolidation.",
@@ -3570,14 +3570,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Optional. Validator BLS public keys (0x-prefixed hex) to query rewards for. Maximum 100 entries.\nWhen omitted, rewards for all tenant validators are returned."
-          },
-          "operators": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Optional. Filter by node operator name (e.g., \"galaxy\", \"figment\").\nMultiple operators may be specified."
+            "description": "Required. Validator BLS public keys (0x-prefixed hex) to query rewards for. 1-100 entries."
           },
           "start_date": {
             "type": "string",
@@ -3617,7 +3610,7 @@
             "description": "Pagination token from previous response."
           }
         },
-        "description": "Request to retrieve validator reward data.\n\n`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
+        "description": "Request to retrieve validator reward data.\n\n`pubkeys` is **required** (1-100 entries). Rewards are returned only for the specified validators. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.",
         "title": "GetRewardsRequest"
       },
       "GetRewardsResponse": {
@@ -3694,7 +3687,7 @@
             "items": {
               "$ref": "#/components/schemas/OperatorCount"
             },
-            "description": "Count by operator."
+            "description": "Count by operator. Every operator currently available to the caller is\nlisted, with a count of 0 where it has no validators (with the operator\nfilter, just that operator). A validator whose operator has been disabled\nfor the caller, or is not offered by this deployment, is still counted in\ntotal_validators, by_status and by_withdrawal_credentials_type but is not\nattributed here, so the counts in this list can sum to less than\ntotal_validators."
           },
           "by_withdrawal_credentials_type": {
             "type": "array",
@@ -4332,7 +4325,7 @@
           },
           "from": {
             "type": "string",
-            "description": "From address (withdrawal address, omitted for TOPUP)."
+            "description": "From address. Resolved from the validator's on-chain withdrawal\ncredentials for withdraw and consolidate. Empty for top-ups, which any\naddress may fund."
           },
           "to": {
             "type": "string",
@@ -4340,7 +4333,7 @@
           },
           "value": {
             "type": "string",
-            "description": "Transaction value in wei."
+            "description": "Transaction value in wei, as a decimal string.\n\nWhat it pays for differs by endpoint: for a top-up it is the deposit\namount; for withdraw and consolidate it is the EIP-7002/EIP-7251 request\nfee the precompile charges, and the withdrawal or consolidation amount is\nencoded in `data` instead. Read `fee_wei` to see the fee component\nexplicitly rather than inferring it from the endpoint."
           },
           "data": {
             "type": "string",
@@ -4350,6 +4343,10 @@
             "type": "string",
             "format": "uint64",
             "description": "Gas limit for the transaction (in gas units)."
+          },
+          "fee_wei": {
+            "type": "string",
+            "description": "Protocol request fee in wei, as a decimal string, for endpoints that call\na precompile charging one: withdraw (EIP-7002) and consolidate\n(EIP-7251). It duplicates `value` on those endpoints.\n\nThis is the same *quantity* /ethereum/fees reports for the corresponding\noperation type, but read independently: this field comes from an execution\nlayer precompile read, /ethereum/fees from the node operator's fee API.\nThey are two reads of a moving value and can disagree at any instant, and\n/ethereum/fees types its fee_wei as a uint64 rather than a string \u2014 so the\ntwo fields are not interchangeable for a gRPC client.\n\nEmpty where no fee applies, such as top-ups, where `value` is the deposit\namount."
           }
         },
         "description": "UnsignedTransactionPayload contains the raw unsigned transaction fields.\nClient must add nonce and gas fees before signing.",
@@ -4632,7 +4629,7 @@
           "withdrawal_address": {
             "type": "string",
             "example": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-            "description": "Withdrawal address (the address that must sign, must match the validator's withdrawal credentials).\nIf omitted, the unsigned transaction will have empty from and signers fields."
+            "description": "Withdrawal address (the address that must sign, must match the validator's withdrawal credentials).\nOptional: when omitted it is resolved from the validator's on-chain\nwithdrawal credentials. Supply it to have the request rejected if it does\nnot match those credentials."
           }
         },
         "description": "WithdrawInput specifies a validator to withdraw from.",

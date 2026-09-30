@@ -25,12 +25,8 @@ const (
 // GetRewardsRequest is the request for retrieving validator rewards.
 type GetRewardsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Optional. Validator BLS public keys (0x-prefixed hex) to query rewards for. Maximum 100 entries.
-	// When omitted, rewards for all tenant validators are returned.
+	// Required. Validator BLS public keys (0x-prefixed hex) to query rewards for. 1-100 entries.
 	Pubkeys []string `protobuf:"bytes,1,rep,name=pubkeys,proto3" json:"pubkeys,omitempty"`
-	// Optional. Filter by node operator name (e.g., "galaxy", "figment").
-	// Multiple operators may be specified.
-	Operators []string `protobuf:"bytes,2,rep,name=operators,proto3" json:"operators,omitempty"`
 	// Start date (YYYY-MM-DD). Use with end_date for daily-rollup mode.
 	StartDate string `protobuf:"bytes,3,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
 	// End date (YYYY-MM-DD). Use with start_date for daily-rollup mode.
@@ -84,13 +80,6 @@ func (*GetRewardsRequest) Descriptor() ([]byte, []int) {
 func (x *GetRewardsRequest) GetPubkeys() []string {
 	if x != nil {
 		return x.Pubkeys
-	}
-	return nil
-}
-
-func (x *GetRewardsRequest) GetOperators() []string {
-	if x != nil {
-		return x.Operators
 	}
 	return nil
 }
@@ -474,10 +463,9 @@ var File_public_ethereum_v1_rewards_proto protoreflect.FileDescriptor
 
 const file_public_ethereum_v1_rewards_proto_rawDesc = "" +
 	"\n" +
-	" public/ethereum/v1/rewards.proto\x12\x12public.ethereum.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\xf2\x05\n" +
+	" public/ethereum/v1/rewards.proto\x12\x12public.ethereum.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\x8b\x05\n" +
 	"\x11GetRewardsRequest\x12\x18\n" +
-	"\apubkeys\x18\x01 \x03(\tR\apubkeys\x12\x1c\n" +
-	"\toperators\x18\x02 \x03(\tR\toperators\x120\n" +
+	"\apubkeys\x18\x01 \x03(\tR\apubkeys\x120\n" +
 	"\n" +
 	"start_date\x18\x03 \x01(\tB\x11\x92A\x0eJ\f\"2026-01-01\"R\tstartDate\x12,\n" +
 	"\bend_date\x18\x04 \x01(\tB\x11\x92A\x0eJ\f\"2026-01-31\"R\aendDate\x12,\n" +
@@ -488,10 +476,10 @@ const file_public_ethereum_v1_rewards_proto_rawDesc = "" +
 	"\x92A\aJ\x05\"ETH\"R\fdenomination\x12%\n" +
 	"\tpage_size\x18b \x01(\x05B\b\x92A\x05J\x03100R\bpageSize\x12\x1f\n" +
 	"\vnext_cursor\x18c \x01(\tR\n" +
-	"nextCursor:\xf4\x02\x92A\xf0\x02\n" +
-	"\xed\x02*\x11GetRewardsRequest2\xd7\x02Request to retrieve validator reward data.\n" +
+	"nextCursor:\x9a\x02\x92A\x96\x02\n" +
+	"\x93\x02*\x11GetRewardsRequest2\xfd\x01Request to retrieve validator reward data.\n" +
 	"\n" +
-	"`pubkeys` is **optional**. When omitted, rewards are returned for all validators belonging to the tenant. When provided, only rewards for the specified validators (up to 100) are returned. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.\"\xa4\x02\n" +
+	"`pubkeys` is **required** (1-100 entries). Rewards are returned only for the specified validators. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.J\x04\b\x02\x10\x03R\toperators\"\xa4\x02\n" +
 	"\x12GetRewardsResponse\x129\n" +
 	"\arewards\x18\x01 \x03(\v2\x1f.public.ethereum.v1.RewardEntryR\arewards\x12E\n" +
 	"\rtotal_rewards\x18\x02 \x01(\v2 .public.ethereum.v1.RewardAmountR\ftotalRewards\x12R\n" +
