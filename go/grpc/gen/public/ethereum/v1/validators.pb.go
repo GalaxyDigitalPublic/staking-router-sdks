@@ -33,8 +33,8 @@ type Validator struct {
 	Operator string `protobuf:"bytes,2,opt,name=operator,proto3" json:"operator,omitempty"`
 	// Current validator status.
 	Status ValidatorStatus `protobuf:"varint,3,opt,name=status,proto3,enum=public.ethereum.v1.ValidatorStatus" json:"status,omitempty"`
-	// Validator index on the beacon chain (if activated).
-	ValidatorIndex uint64 `protobuf:"varint,4,opt,name=validator_index,json=validatorIndex,proto3" json:"validator_index,omitempty"`
+	// Validator index on the beacon chain (if activated). Absent before activation.
+	ValidatorIndex *uint64 `protobuf:"varint,4,opt,name=validator_index,json=validatorIndex,proto3,oneof" json:"validator_index,omitempty"`
 	// Withdrawal credentials type.
 	// Withdrawal credentials type: "0x01" (execution) or "0x02" (compounding, EIP-7251).
 	WithdrawalCredentialsType string `protobuf:"bytes,5,opt,name=withdrawal_credentials_type,json=withdrawalCredentialsType,proto3" json:"withdrawal_credentials_type,omitempty"`
@@ -110,8 +110,8 @@ func (x *Validator) GetStatus() ValidatorStatus {
 }
 
 func (x *Validator) GetValidatorIndex() uint64 {
-	if x != nil {
-		return x.ValidatorIndex
+	if x != nil && x.ValidatorIndex != nil {
+		return *x.ValidatorIndex
 	}
 	return 0
 }
@@ -188,8 +188,8 @@ type ValidatorDetail struct {
 	Operator string `protobuf:"bytes,2,opt,name=operator,proto3" json:"operator,omitempty"`
 	// Current validator status.
 	Status ValidatorStatus `protobuf:"varint,3,opt,name=status,proto3,enum=public.ethereum.v1.ValidatorStatus" json:"status,omitempty"`
-	// Validator index on the beacon chain (if activated).
-	ValidatorIndex uint64 `protobuf:"varint,4,opt,name=validator_index,json=validatorIndex,proto3" json:"validator_index,omitempty"`
+	// Validator index on the beacon chain (if activated). Absent before activation.
+	ValidatorIndex *uint64 `protobuf:"varint,4,opt,name=validator_index,json=validatorIndex,proto3,oneof" json:"validator_index,omitempty"`
 	// Withdrawal credentials type.
 	// Withdrawal credentials type: "0x01" (execution) or "0x02" (compounding, EIP-7251).
 	WithdrawalCredentialsType string `protobuf:"bytes,5,opt,name=withdrawal_credentials_type,json=withdrawalCredentialsType,proto3" json:"withdrawal_credentials_type,omitempty"`
@@ -271,8 +271,8 @@ func (x *ValidatorDetail) GetStatus() ValidatorStatus {
 }
 
 func (x *ValidatorDetail) GetValidatorIndex() uint64 {
-	if x != nil {
-		return x.ValidatorIndex
+	if x != nil && x.ValidatorIndex != nil {
+		return *x.ValidatorIndex
 	}
 	return 0
 }
@@ -1122,13 +1122,13 @@ var File_public_ethereum_v1_validators_proto protoreflect.FileDescriptor
 
 const file_public_ethereum_v1_validators_proto_rawDesc = "" +
 	"\n" +
-	"#public/ethereum/v1/validators.proto\x12\x12public.ethereum.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\x84\b\n" +
+	"#public/ethereum/v1/validators.proto\x12\x12public.ethereum.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\x9d\b\n" +
 	"\tValidator\x12\x84\x01\n" +
 	"\x06pubkey\x18\x01 \x01(\tBl\x92AfJd\"0xb6c621e7c7c8c574c25b6c9345cf517e984a34e83a1d501c267a7c85fa6d188304caf8fd5738e9f3d9c0e9706533b0e8\"\xe0A\x03R\x06pubkey\x12,\n" +
 	"\boperator\x18\x02 \x01(\tB\x10\x92A\n" +
 	"J\b\"galaxy\"\xe0A\x03R\boperator\x12@\n" +
-	"\x06status\x18\x03 \x01(\x0e2#.public.ethereum.v1.ValidatorStatusB\x03\xe0A\x03R\x06status\x127\n" +
-	"\x0fvalidator_index\x18\x04 \x01(\x04B\x0e\x92A\bJ\x06123456\xe0A\x03R\x0evalidatorIndex\x12N\n" +
+	"\x06status\x18\x03 \x01(\x0e2#.public.ethereum.v1.ValidatorStatusB\x03\xe0A\x03R\x06status\x12<\n" +
+	"\x0fvalidator_index\x18\x04 \x01(\x04B\x0e\x92A\bJ\x06123456\xe0A\x03H\x00R\x0evalidatorIndex\x88\x01\x01\x12N\n" +
 	"\x1bwithdrawal_credentials_type\x18\x05 \x01(\tB\x0e\x92A\bJ\x06\"0x01\"\xe0A\x03R\x19withdrawalCredentialsType\x12c\n" +
 	"\x12withdrawal_address\x18\x06 \x01(\tB4\x92A.J,\"0x71C7656EC7ab88b098defB751B7401B5f6d8976F\"\xe0A\x03R\x11withdrawalAddress\x12e\n" +
 	"\x15fee_recipient_address\x18\a \x01(\tB1\x92A.J,\"0x71C7656EC7ab88b098defB751B7401B5f6d8976F\"R\x13feeRecipientAddress\x126\n" +
@@ -1138,13 +1138,14 @@ const file_public_ethereum_v1_validators_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x15estimatedActivationAt\x12F\n" +
 	"\x11estimated_exit_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x0festimatedExitAt\x12R\n" +
 	"\x17estimated_withdrawal_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\x15estimatedWithdrawalAt\x128\n" +
-	"\x18presigned_exit_available\x18\r \x01(\bR\x16presignedExitAvailable\"\xdc\t\n" +
+	"\x18presigned_exit_available\x18\r \x01(\bR\x16presignedExitAvailableB\x12\n" +
+	"\x10_validator_index\"\xf5\t\n" +
 	"\x0fValidatorDetail\x12\x84\x01\n" +
 	"\x06pubkey\x18\x01 \x01(\tBl\x92AfJd\"0xb6c621e7c7c8c574c25b6c9345cf517e984a34e83a1d501c267a7c85fa6d188304caf8fd5738e9f3d9c0e9706533b0e8\"\xe0A\x03R\x06pubkey\x12,\n" +
 	"\boperator\x18\x02 \x01(\tB\x10\x92A\n" +
 	"J\b\"galaxy\"\xe0A\x03R\boperator\x12@\n" +
-	"\x06status\x18\x03 \x01(\x0e2#.public.ethereum.v1.ValidatorStatusB\x03\xe0A\x03R\x06status\x127\n" +
-	"\x0fvalidator_index\x18\x04 \x01(\x04B\x0e\x92A\bJ\x06123456\xe0A\x03R\x0evalidatorIndex\x12N\n" +
+	"\x06status\x18\x03 \x01(\x0e2#.public.ethereum.v1.ValidatorStatusB\x03\xe0A\x03R\x06status\x12<\n" +
+	"\x0fvalidator_index\x18\x04 \x01(\x04B\x0e\x92A\bJ\x06123456\xe0A\x03H\x00R\x0evalidatorIndex\x88\x01\x01\x12N\n" +
 	"\x1bwithdrawal_credentials_type\x18\x05 \x01(\tB\x0e\x92A\bJ\x06\"0x01\"\xe0A\x03R\x19withdrawalCredentialsType\x12c\n" +
 	"\x12withdrawal_address\x18\x06 \x01(\tB4\x92A.J,\"0x71C7656EC7ab88b098defB751B7401B5f6d8976F\"\xe0A\x03R\x11withdrawalAddress\x12e\n" +
 	"\x15fee_recipient_address\x18\a \x01(\tB1\x92A.J,\"0x71C7656EC7ab88b098defB751B7401B5f6d8976F\"R\x13feeRecipientAddress\x126\n" +
@@ -1157,7 +1158,8 @@ const file_public_ethereum_v1_validators_proto_rawDesc = "" +
 	"\x0estatus_history\x18\r \x03(\v2$.public.ethereum.v1.StatusTransitionR\rstatusHistory\x12H\n" +
 	"\x0eprovision_info\x18\x0e \x01(\v2!.public.ethereum.v1.ProvisionInfoR\rprovisionInfo\x129\n" +
 	"\texit_info\x18\x0f \x01(\v2\x1c.public.ethereum.v1.ExitInfoR\bexitInfo\x128\n" +
-	"\x18presigned_exit_available\x18\x10 \x01(\bR\x16presignedExitAvailable\"\x94\x01\n" +
+	"\x18presigned_exit_available\x18\x10 \x01(\bR\x16presignedExitAvailableB\x12\n" +
+	"\x10_validator_index\"\x94\x01\n" +
 	"\x10StatusTransition\x12;\n" +
 	"\x06status\x18\x01 \x01(\x0e2#.public.ethereum.v1.ValidatorStatusR\x06status\x12C\n" +
 	"\x0ftransitioned_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0etransitionedAt\"u\n" +
@@ -1284,6 +1286,8 @@ func file_public_ethereum_v1_validators_proto_init() {
 		return
 	}
 	file_public_ethereum_v1_common_proto_init()
+	file_public_ethereum_v1_validators_proto_msgTypes[0].OneofWrappers = []any{}
+	file_public_ethereum_v1_validators_proto_msgTypes[1].OneofWrappers = []any{}
 	file_public_ethereum_v1_validators_proto_msgTypes[11].OneofWrappers = []any{}
 	file_public_ethereum_v1_validators_proto_msgTypes[12].OneofWrappers = []any{}
 	file_public_ethereum_v1_validators_proto_msgTypes[13].OneofWrappers = []any{}

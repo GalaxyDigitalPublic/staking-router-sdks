@@ -4410,7 +4410,7 @@
             "type": "string",
             "format": "uint64",
             "example": 123456,
-            "description": "Validator index on the beacon chain (if activated).",
+            "description": "Validator index on the beacon chain (if activated). Absent before activation.",
             "readOnly": true
           },
           "withdrawal_credentials_type": {
@@ -4488,7 +4488,7 @@
             "type": "string",
             "format": "uint64",
             "example": 123456,
-            "description": "Validator index on the beacon chain (if activated).",
+            "description": "Validator index on the beacon chain (if activated). Absent before activation.",
             "readOnly": true
           },
           "withdrawal_credentials_type": {

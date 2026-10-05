@@ -1267,7 +1267,7 @@ type Validator struct {
 	//  - SLASHED: Slashed validator.
 	Status *ValidatorStatus `json:"status,omitempty"`
 
-	// ValidatorIndex Validator index on the beacon chain (if activated).
+	// ValidatorIndex Validator index on the beacon chain (if activated). Absent before activation.
 	ValidatorIndex *string `json:"validator_index,omitempty"`
 
 	// WithdrawalAddress Withdrawal address (execution layer).
@@ -1328,7 +1328,7 @@ type ValidatorDetail struct {
 	// StatusHistory History of status transitions.
 	StatusHistory *[]StatusTransition `json:"status_history,omitempty"`
 
-	// ValidatorIndex Validator index on the beacon chain (if activated).
+	// ValidatorIndex Validator index on the beacon chain (if activated). Absent before activation.
 	ValidatorIndex *string `json:"validator_index,omitempty"`
 
 	// WithdrawalAddress Withdrawal address (execution layer).
