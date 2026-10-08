@@ -402,18 +402,20 @@ type ExitArtifact struct {
 	ValidatorIndex *string `json:"validator_index,omitempty"`
 }
 
-// ExitInfo ExitInfo contains exit operation details.
+// ExitInfo ExitInfo contains exit operation details and any known beacon epochs.
 type ExitInfo struct {
-	// ExitEpoch Exit epoch.
+	// ExitEpoch Known scheduled exit epoch, including zero. Absent when unknown, unprovided
+	// by the selected source, or unscheduled according to the beacon source.
 	ExitEpoch *string `json:"exit_epoch,omitempty"`
 
-	// OperationId Exit operation ID.
+	// OperationId Exit operation ID. Empty when no tenant-visible linked operation exists.
 	OperationId *string `json:"operation_id,omitempty"`
 
 	// RequestedAt Timestamp when exit was requested.
 	RequestedAt *time.Time `json:"requested_at,omitempty"`
 
-	// WithdrawableEpoch Withdrawable epoch.
+	// WithdrawableEpoch Known scheduled withdrawable epoch, including zero. Absent when unknown,
+	// unprovided by the selected source, or unscheduled according to the beacon.
 	WithdrawableEpoch *string `json:"withdrawable_epoch,omitempty"`
 }
 
@@ -1295,7 +1297,7 @@ type ValidatorDetail struct {
 	// EstimatedWithdrawalAt Estimated withdrawal timestamp (if exiting).
 	EstimatedWithdrawalAt *time.Time `json:"estimated_withdrawal_at,omitempty"`
 
-	// ExitInfo ExitInfo contains exit operation details.
+	// ExitInfo ExitInfo contains exit operation details and any known beacon epochs.
 	ExitInfo *ExitInfo `json:"exit_info,omitempty"`
 
 	// FeeRecipientAddress Fee recipient address for block rewards.

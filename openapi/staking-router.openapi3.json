@@ -3153,7 +3153,7 @@
         "properties": {
           "operation_id": {
             "type": "string",
-            "description": "Exit operation ID."
+            "description": "Exit operation ID. Empty when no tenant-visible linked operation exists."
           },
           "requested_at": {
             "type": "string",
@@ -3163,15 +3163,15 @@
           "exit_epoch": {
             "type": "string",
             "format": "uint64",
-            "description": "Exit epoch."
+            "description": "Known scheduled exit epoch, including zero. Absent when unknown, unprovided\nby the selected source, or unscheduled according to the beacon source."
           },
           "withdrawable_epoch": {
             "type": "string",
             "format": "uint64",
-            "description": "Withdrawable epoch."
+            "description": "Known scheduled withdrawable epoch, including zero. Absent when unknown,\nunprovided by the selected source, or unscheduled according to the beacon."
           }
         },
-        "description": "ExitInfo contains exit operation details."
+        "description": "ExitInfo contains exit operation details and any known beacon epochs."
       },
       "ExitMessageData": {
         "type": "object",

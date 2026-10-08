@@ -471,17 +471,19 @@ func (x *ProvisionInfo) GetProvisionedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// ExitInfo contains exit operation details.
+// ExitInfo contains exit operation details and any known beacon epochs.
 type ExitInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Exit operation ID.
+	// Exit operation ID. Empty when no tenant-visible linked operation exists.
 	OperationId string `protobuf:"bytes,1,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
 	// Timestamp when exit was requested.
 	RequestedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
-	// Exit epoch.
-	ExitEpoch uint64 `protobuf:"varint,3,opt,name=exit_epoch,json=exitEpoch,proto3" json:"exit_epoch,omitempty"`
-	// Withdrawable epoch.
-	WithdrawableEpoch uint64 `protobuf:"varint,4,opt,name=withdrawable_epoch,json=withdrawableEpoch,proto3" json:"withdrawable_epoch,omitempty"`
+	// Known scheduled exit epoch, including zero. Absent when unknown, unprovided
+	// by the selected source, or unscheduled according to the beacon source.
+	ExitEpoch *uint64 `protobuf:"varint,3,opt,name=exit_epoch,json=exitEpoch,proto3,oneof" json:"exit_epoch,omitempty"`
+	// Known scheduled withdrawable epoch, including zero. Absent when unknown,
+	// unprovided by the selected source, or unscheduled according to the beacon.
+	WithdrawableEpoch *uint64 `protobuf:"varint,4,opt,name=withdrawable_epoch,json=withdrawableEpoch,proto3,oneof" json:"withdrawable_epoch,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -531,15 +533,15 @@ func (x *ExitInfo) GetRequestedAt() *timestamppb.Timestamp {
 }
 
 func (x *ExitInfo) GetExitEpoch() uint64 {
-	if x != nil {
-		return x.ExitEpoch
+	if x != nil && x.ExitEpoch != nil {
+		return *x.ExitEpoch
 	}
 	return 0
 }
 
 func (x *ExitInfo) GetWithdrawableEpoch() uint64 {
-	if x != nil {
-		return x.WithdrawableEpoch
+	if x != nil && x.WithdrawableEpoch != nil {
+		return *x.WithdrawableEpoch
 	}
 	return 0
 }
@@ -1165,13 +1167,15 @@ const file_public_ethereum_v1_validators_proto_rawDesc = "" +
 	"\x0ftransitioned_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0etransitionedAt\"u\n" +
 	"\rProvisionInfo\x12!\n" +
 	"\foperation_id\x18\x01 \x01(\tR\voperationId\x12A\n" +
-	"\x0eprovisioned_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\rprovisionedAt\"\xba\x01\n" +
+	"\x0eprovisioned_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\rprovisionedAt\"\xea\x01\n" +
 	"\bExitInfo\x12!\n" +
 	"\foperation_id\x18\x01 \x01(\tR\voperationId\x12=\n" +
-	"\frequested_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\vrequestedAt\x12\x1d\n" +
+	"\frequested_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\vrequestedAt\x12\"\n" +
 	"\n" +
-	"exit_epoch\x18\x03 \x01(\x04R\texitEpoch\x12-\n" +
-	"\x12withdrawable_epoch\x18\x04 \x01(\x04R\x11withdrawableEpoch\"\x9c\x01\n" +
+	"exit_epoch\x18\x03 \x01(\x04H\x00R\texitEpoch\x88\x01\x01\x122\n" +
+	"\x12withdrawable_epoch\x18\x04 \x01(\x04H\x01R\x11withdrawableEpoch\x88\x01\x01B\r\n" +
+	"\v_exit_epochB\x15\n" +
+	"\x13_withdrawable_epoch\"\x9c\x01\n" +
 	"\x13GetValidatorRequest\x12\x84\x01\n" +
 	"\x06pubkey\x18\x01 \x01(\tBl\x92AfJd\"0xb6c621e7c7c8c574c25b6c9345cf517e984a34e83a1d501c267a7c85fa6d188304caf8fd5738e9f3d9c0e9706533b0e8\"\xe0A\x02R\x06pubkey\"Y\n" +
 	"\x14GetValidatorResponse\x12A\n" +
@@ -1288,6 +1292,7 @@ func file_public_ethereum_v1_validators_proto_init() {
 	file_public_ethereum_v1_common_proto_init()
 	file_public_ethereum_v1_validators_proto_msgTypes[0].OneofWrappers = []any{}
 	file_public_ethereum_v1_validators_proto_msgTypes[1].OneofWrappers = []any{}
+	file_public_ethereum_v1_validators_proto_msgTypes[4].OneofWrappers = []any{}
 	file_public_ethereum_v1_validators_proto_msgTypes[11].OneofWrappers = []any{}
 	file_public_ethereum_v1_validators_proto_msgTypes[12].OneofWrappers = []any{}
 	file_public_ethereum_v1_validators_proto_msgTypes[13].OneofWrappers = []any{}
