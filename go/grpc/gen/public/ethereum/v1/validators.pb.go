@@ -641,7 +641,10 @@ func (x *GetValidatorResponse) GetValidator() *ValidatorDetail {
 // ListValidatorsRequest is the request for listing validators with filters.
 type ListValidatorsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Filter by validator status.
+	// Filter by validator status, given as the exact, case-sensitive enum name (e.g. "ACTIVE") or its number.
+	// Over REST, UNSPECIFIED_VALIDATOR_STATUS (0), another case and unknown values are a 400
+	// UNSUPPORTED_OPERATION_STATUS. Over gRPC, UNSPECIFIED still means "no filter": proto3 cannot tell
+	// it apart from an omitted field.
 	Status ValidatorStatus `protobuf:"varint,1,opt,name=status,proto3,enum=public.ethereum.v1.ValidatorStatus" json:"status,omitempty"`
 	// Filter by operator.
 	Operator string `protobuf:"bytes,2,opt,name=operator,proto3" json:"operator,omitempty"`

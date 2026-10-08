@@ -2537,7 +2537,10 @@ type V1Operation struct {
 
 // StakingRouterServiceListValidatorsParams defines parameters for StakingRouterServiceListValidators.
 type StakingRouterServiceListValidatorsParams struct {
-	// Status Filter by validator status.
+	// Status Filter by validator status, given as the exact, case-sensitive enum name (e.g. "ACTIVE") or its number.
+	// Over REST, UNSPECIFIED_VALIDATOR_STATUS (0), another case and unknown values are a 400
+	// UNSUPPORTED_OPERATION_STATUS. Over gRPC, UNSPECIFIED still means "no filter": proto3 cannot tell
+	// it apart from an omitted field.
 	//
 	//  - PROVISIONED: Provisioned by node operator, awaiting deposit.
 	//  - PENDING_DEPOSIT: Deposit submitted, awaiting beacon chain recognition.
@@ -6512,6 +6515,7 @@ type StakingRouterServiceCreateWithdrawTransactionResponse struct {
 	JSON200      *CreateWithdrawTransactionResponse
 	JSON400      *interface{}
 	JSON404      *interface{}
+	JSON409      *interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -6557,6 +6561,7 @@ type StakingRouterServiceListValidatorsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListValidatorsResponse
+	JSON400      *interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -6627,7 +6632,6 @@ type StakingRouterServiceExitResponse struct {
 	JSON400      *interface{}
 	JSON404      *interface{}
 	JSON409      *interface{}
-	JSON422      *interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -8134,6 +8138,13 @@ func ParseStakingRouterServiceCreateWithdrawTransactionResponse(rsp *http.Respon
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	}
 
 	return response, nil
@@ -8192,6 +8203,13 @@ func ParseStakingRouterServiceListValidatorsResponse(rsp *http.Response) (*Staki
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -8298,13 +8316,6 @@ func ParseStakingRouterServiceExitResponse(rsp *http.Response) (*StakingRouterSe
 			return nil, err
 		}
 		response.JSON409 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
 
 	}
 

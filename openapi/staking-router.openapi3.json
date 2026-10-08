@@ -528,7 +528,7 @@
             }
           },
           "409": {
-            "description": "Precondition failed. Either the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`, `WITHDRAWAL_CREDENTIALS_MISMATCH`), source and target are the same without eligible credentials to switch to compounding (`CONSOLIDATION_SAME_VALIDATOR`), a validator fails the consensus-layer eligibility gates: not active / not active long enough (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), already exited (`VALIDATOR_ALREADY_EXITED`), or the source has a queued partial withdrawal (`OPERATION_IN_PROGRESS`).\n\nA validator named as the source of more than one consolidation, or as both a source and a target, is rejected with `DUPLICATE_PUBKEYS` as a 400 instead \u2014 that is a request-shape error, decided before any consensus-layer read.\n\nAll precondition failures on this endpoint are served as 409: the REST gateway derives the HTTP status from the gRPC code, and every code above maps to FAILED_PRECONDITION.",
+            "description": "Precondition failed. Either the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`, `WITHDRAWAL_CREDENTIALS_MISMATCH`), source and target are the same without eligible credentials to switch to compounding (`CONSOLIDATION_SAME_VALIDATOR`), a validator fails the consensus-layer eligibility gates: not active / not active long enough / provisioned but not on the beacon chain yet (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), already exited (`VALIDATOR_ALREADY_EXITED`), or the source has a queued partial withdrawal (`OPERATION_IN_PROGRESS`). A pubkey the consensus layer has no record of is 404 `VALIDATOR_NOT_FOUND`, unless it is one of your organisation's provisioned validators, which is 409 `VALIDATOR_NOT_ACTIVE`.\n\nA validator named as the source of more than one consolidation, or as both a source and a target, is rejected with `DUPLICATE_PUBKEYS` as a 400 instead \u2014 that is a request-shape error, decided before any consensus-layer read.\n\nAll precondition failures on this endpoint are served as 409: the REST gateway derives the HTTP status from the gRPC code, and every code above maps to FAILED_PRECONDITION.",
             "content": {
               "application/json": {
                 "schema": {},
@@ -589,7 +589,7 @@
     "/v1/ethereum/transactions/topup": {
       "post": {
         "summary": "Create top-up transaction",
-        "description": "Build unsigned top-up transactions to add ETH to validator balances.\n\n**Signing:** Anyone can fund a top-up (`signer: ANY`).\n\n**Verification:** Before signing, verify:\n- `inputs` matches your request\n- `unsigned_transaction.to` equals the deposit contract\n- `unsigned_transaction.value` matches expected amount",
+        "description": "Build unsigned top-up transactions to add ETH to validator balances.\n\n**Signing:** Anyone can fund a top-up (`signer: ANY`).\n\nEach validator may be listed once per request, in any hex spelling; a repeat would fund the same validator twice.\n\n**Verification:** Before signing, verify:\n- `inputs` matches your request\n- `unsigned_transaction.to` equals the deposit contract\n- `unsigned_transaction.value` matches expected amount",
         "operationId": "StakingRouterService_CreateTopupTransaction",
         "responses": {
           "200": {
@@ -627,7 +627,7 @@
             }
           },
           "400": {
-            "description": "Invalid request parameters",
+            "description": "Invalid request parameters. A validator listed more than once is rejected with `DUPLICATE_PUBKEYS`; its `index` and `conflicting_index` details name the repeat and the entry it repeats. This is decided from the request alone, before any lookup.",
             "content": {
               "application/json": {
                 "schema": {},
@@ -664,7 +664,7 @@
     "/v1/ethereum/transactions/withdraw": {
       "post": {
         "summary": "Create withdrawal transaction",
-        "description": "Build unsigned EL withdrawal transactions (partial or full).\n\nUse `amount_gwei: 0` for full withdrawal (max available).\n\n**Signing:** Must be signed by withdrawal address (`signer: WITHDRAWAL_ADDRESS`).\n\n**Verification:** Before signing, verify:\n- `inputs` matches your request\n- `unsigned_transaction.to` equals the withdrawal precompile\n- `unsigned_transaction.from` is your withdrawal address",
+        "description": "Build unsigned EL withdrawal transactions (partial or full).\n\nUse `amount_gwei: 0` for full withdrawal (max available).\n\n**Chain rules (EIP-7002 drops the request on-chain, after spending the fee, if any fails):**\n- The validator must be on the beacon chain, active, and not exiting or exited.\n- It must have been active for at least 256 epochs (SHARD_COMMITTEE_PERIOD).\n- A full exit requires execution credentials (0x01 or 0x02); a partial request requires 0x02.\n- A full exit is dropped while a partial withdrawal is pending. A partial amount is capped at the balance above 32 ETH after subtracting pending partial withdrawals.\n\n**Staking Router policy (stricter than the chain rules):**\n- Every request requires 0x02 compounding credentials, including a full exit.\n- A partial amount exceeding the remaining balance above 32 ETH after pending withdrawals is rejected.\n- Pending withdrawals are checked before transaction construction, but the queue can change before a request reaches the chain.\n\nEach validator may be listed once per request, in any hex spelling.\n\n**Signing:** Must be signed by withdrawal address (`signer: WITHDRAWAL_ADDRESS`).\n\n**Verification:** Before signing, verify:\n- `inputs` matches your request\n- `unsigned_transaction.to` equals the withdrawal precompile\n- `unsigned_transaction.from` is your withdrawal address",
         "operationId": "StakingRouterService_CreateWithdrawTransaction",
         "responses": {
           "200": {
@@ -702,7 +702,7 @@
             }
           },
           "400": {
-            "description": "Invalid request parameters",
+            "description": "Invalid request parameters. A validator listed more than once is rejected with `DUPLICATE_PUBKEYS`; its `index` and `conflicting_index` details name the repeat and the entry it repeats. This is decided from the request alone, before any lookup.",
             "content": {
               "application/json": {
                 "schema": {},
@@ -730,6 +730,27 @@
                       "error": {
                         "code": "VALIDATOR_NOT_FOUND",
                         "message": "Validator not found",
+                        "details": {
+                          "pubkey": "0x8a2f5c3b..."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Precondition failed. The validator is already exited (`VALIDATOR_ALREADY_EXITED`), is already exiting (`VALIDATOR_ALREADY_EXITING`), or is not active, has not been active for 256 epochs, or is provisioned but not on the beacon chain yet (`VALIDATOR_NOT_ACTIVE`; the `cl_status` detail carries the consensus-layer status when that is the reason). A pubkey the consensus layer has no record of is 404 `VALIDATOR_NOT_FOUND`, unless it is one of your organisation's provisioned validators, which is 409 `VALIDATOR_NOT_ACTIVE`. Also returned when the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`) or do not match a supplied `withdrawal_address` (`WITHDRAWAL_CREDENTIALS_MISMATCH`), the validator is the source of a pending consolidation (`OPERATION_IN_PROGRESS`), or a partial amount exceeds the available balance (`INSUFFICIENT_BALANCE`).\n\nNo transaction is built in any of these cases. All precondition failures on this endpoint are served as 409: the REST gateway derives the HTTP status from the gRPC code, and every code above maps to FAILED_PRECONDITION.",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "VALIDATOR_ALREADY_EXITED",
+                        "message": "validator has already exited",
                         "details": {
                           "pubkey": "0x8a2f5c3b..."
                         }
@@ -824,7 +845,7 @@
     "/v1/ethereum/validators": {
       "get": {
         "summary": "List validators",
-        "description": "Retrieve a paginated list of validators with optional filters.",
+        "description": "Retrieve a paginated list of validators with optional filters.\n\n`status` takes the exact, case-sensitive name of a validator status (for example `ACTIVE`) or its number. `UNSPECIFIED_VALIDATOR_STATUS` (0), a different case, and any unknown value are rejected with `400 UNSUPPORTED_OPERATION_STATUS`, which lists the allowed names. Omit `status` to list every status.",
         "operationId": "StakingRouterService_ListValidators",
         "responses": {
           "200": {
@@ -849,12 +870,33 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid filter or pagination parameter. An unsupported `status` is `UNSUPPORTED_OPERATION_STATUS`, with `details.parameter` naming the key.",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "response": {
+                    "value": {
+                      "error": {
+                        "code": "UNSUPPORTED_OPERATION_STATUS",
+                        "message": "query parameter \"status\" must be one of PROVISIONED, PENDING_DEPOSIT, PENDING_ACTIVATION, ACTIVE, EXITING, EXITED, WITHDRAWN, SLASHED",
+                        "details": {
+                          "parameter": "status"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "parameters": [
           {
             "name": "status",
-            "description": "Filter by validator status.\n\n - PROVISIONED: Provisioned by node operator, awaiting deposit.\n - PENDING_DEPOSIT: Deposit submitted, awaiting beacon chain recognition.\n - PENDING_ACTIVATION: Recognized on beacon chain, awaiting activation queue.\n - ACTIVE: Active and attesting.\n - EXITING: Exit initiated, in exit queue.\n - EXITED: Exited but funds not yet withdrawn.\n - WITHDRAWN: Funds withdrawn to withdrawal address.\n - SLASHED: Slashed validator.",
+            "description": "Filter by validator status, given as the exact, case-sensitive enum name (e.g. \"ACTIVE\") or its number.\nOver REST, UNSPECIFIED_VALIDATOR_STATUS (0), another case and unknown values are a 400\nUNSUPPORTED_OPERATION_STATUS. Over gRPC, UNSPECIFIED still means \"no filter\": proto3 cannot tell\nit apart from an omitted field.\n\n - PROVISIONED: Provisioned by node operator, awaiting deposit.\n - PENDING_DEPOSIT: Deposit submitted, awaiting beacon chain recognition.\n - PENDING_ACTIVATION: Recognized on beacon chain, awaiting activation queue.\n - ACTIVE: Active and attesting.\n - EXITING: Exit initiated, in exit queue.\n - EXITED: Exited but funds not yet withdrawn.\n - WITHDRAWN: Funds withdrawn to withdrawal address.\n - SLASHED: Slashed validator.",
             "in": "query",
             "required": false,
             "schema": {
@@ -1122,7 +1164,7 @@
             }
           },
           "409": {
-            "description": "Idempotency conflict - same client_request_id with different parameters",
+            "description": "Conflict. Either the same client_request_id was reused with different parameters (`OPERATION_ALREADY_EXISTS`), or a validator is in a state that rules out an exit: not active, or active for fewer than 256 epochs (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), or with an exit operation already in progress (`OPERATION_IN_PROGRESS`).",
             "content": {
               "application/json": {
                 "schema": {},
@@ -1135,28 +1177,6 @@
                         "details": {
                           "client_request_id": "49bf80cb-c7ca-4082-a526-8afab545cc62",
                           "reason": "payload differs"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validator in wrong state",
-            "content": {
-              "application/json": {
-                "schema": {},
-                "examples": {
-                  "response": {
-                    "value": {
-                      "error": {
-                        "code": "VALIDATOR_NOT_ACTIVE",
-                        "message": "Cannot exit validator in PENDING_DEPOSIT state",
-                        "details": {
-                          "pubkey": "0x8a2f5c3b...",
-                          "current_status": "PENDING_DEPOSIT"
                         }
                       }
                     }

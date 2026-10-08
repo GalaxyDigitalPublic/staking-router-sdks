@@ -769,7 +769,7 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x06pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x06pubkey\x127\n" +
 	"\x15fee_recipient_address\x18\x02 \x01(\tB\x03\xe0A\x02R\x13feeRecipientAddress\"Y\n" +
 	"\x1aUpdateFeeRecipientResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\x91\xc7\x01\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\xad\xe4\x01\n" +
 	"\x14StakingRouterService\x12\x9d\x05\n" +
 	"\fGetOperation\x12'.public.ethereum.v1.GetOperationRequest\x1a(.public.ethereum.v1.GetOperationResponse\"\xb9\x04\x92A\x91\x04\n" +
 	"\n" +
@@ -800,12 +800,17 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12\x89\x01{\"operator\":{\"id\":\"figment\",\"name\":\"Figment\",\"capabilities\":{\"provision\":{\"supported\":true},\"update_fee_recipient\":{\"supported\":false}}}}J\x9c\x01\n" +
 	"\x03404\x12\x94\x01\n" +
 	"\x12Operator not found\"~\n" +
-	"\x10application/json\x12j{\"error\":{\"code\":\"OPERATOR_NOT_FOUND\",\"message\":\"Operator not found\",\"details\":{\"id\":\"unknown_operator\"}}}\x82\xd3\xe4\x93\x02\x1d\x12\x1b/v1/ethereum/operators/{id}\x12\xf8\x02\n" +
-	"\x0eListValidators\x12).public.ethereum.v1.ListValidatorsRequest\x1a*.public.ethereum.v1.ListValidatorsResponse\"\x8e\x02\x92A\xeb\x01\n" +
-	"\x13Ethereum Validators\x12\x0fList validators\x1a>Retrieve a paginated list of validators with optional filters.J\x82\x01\n" +
+	"\x10application/json\x12j{\"error\":{\"code\":\"OPERATOR_NOT_FOUND\",\"message\":\"Operator not found\",\"details\":{\"id\":\"unknown_operator\"}}}\x82\xd3\xe4\x93\x02\x1d\x12\x1b/v1/ethereum/operators/{id}\x12\xc0\b\n" +
+	"\x0eListValidators\x12).public.ethereum.v1.ListValidatorsRequest\x1a*.public.ethereum.v1.ListValidatorsResponse\"\xd6\a\x92A\xb3\a\n" +
+	"\x13Ethereum Validators\x12\x0fList validators\x1a\xee\x02Retrieve a paginated list of validators with optional filters.\n" +
+	"\n" +
+	"`status` takes the exact, case-sensitive name of a validator status (for example `ACTIVE`) or its number. `UNSPECIFIED_VALIDATOR_STATUS` (0), a different case, and any unknown value are rejected with `400 UNSUPPORTED_OPERATION_STATUS`, which lists the allowed names. Omit `status` to list every status.J\x82\x01\n" +
 	"\x03200\x12{\n" +
 	"\x12List of validators\"e\n" +
-	"\x10application/json\x12Q{\"validators\":[{\"pubkey\":\"0x8a2f5c3b...\",\"operator\":\"galaxy\",\"status\":\"ACTIVE\"}]}\x82\xd3\xe4\x93\x02\x19\x12\x17/v1/ethereum/validators\x12\xed\x02\n" +
+	"\x10application/json\x12Q{\"validators\":[{\"pubkey\":\"0x8a2f5c3b...\",\"operator\":\"galaxy\",\"status\":\"ACTIVE\"}]}J\x94\x03\n" +
+	"\x03400\x12\x8c\x03\n" +
+	"\x8b\x01Invalid filter or pagination parameter. An unsupported `status` is `UNSUPPORTED_OPERATION_STATUS`, with `details.parameter` naming the key.\"\xfb\x01\n" +
+	"\x10application/json\x12\xe6\x01{\"error\":{\"code\":\"UNSUPPORTED_OPERATION_STATUS\",\"message\":\"query parameter \\\"status\\\" must be one of PROVISIONED, PENDING_DEPOSIT, PENDING_ACTIVATION, ACTIVE, EXITING, EXITED, WITHDRAWN, SLASHED\",\"details\":{\"parameter\":\"status\"}}}\x82\xd3\xe4\x93\x02\x19\x12\x17/v1/ethereum/validators\x12\xed\x02\n" +
 	"\fGetValidator\x12'.public.ethereum.v1.GetValidatorRequest\x1a(.public.ethereum.v1.GetValidatorResponse\"\x89\x02\x92A\xdd\x01\n" +
 	"\x13Ethereum Validators\x12\rGet validator\x1a7Retrieve detailed information about a single validator.J~\n" +
 	"\x03200\x12w\n" +
@@ -862,8 +867,8 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xc1\x01\n" +
 	"\x03502\x12\xb9\x01\n" +
 	"\x1dNode operator API unavailable\"\x97\x01\n" +
-	"\x10application/json\x12\x82\x01{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"Node operator API is temporarily unavailable\",\"details\":{\"operator\":\"galaxy\"}}}\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/ethereum/validators/provision\x12\xb9\x12\n" +
-	"\x04Exit\x12\x1f.public.ethereum.v1.ExitRequest\x1a .public.ethereum.v1.ExitResponse\"\xed\x11\x92A\xc2\x11\n" +
+	"\x10application/json\x12\x82\x01{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"Node operator API is temporarily unavailable\",\"details\":{\"operator\":\"galaxy\"}}}\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/ethereum/validators/provision\x12\xef\x12\n" +
+	"\x04Exit\x12\x1f.public.ethereum.v1.ExitRequest\x1a .public.ethereum.v1.ExitResponse\"\xa3\x12\x92A\xf8\x11\n" +
 	"\x10Ethereum Actions\x12\x14Exit validators (CL)\x1a\x8b\tInitiate a voluntary exit via the consensus layer.\n" +
 	"\n" +
 	"The node operator will broadcast the signed exit message to the beacon chain.\n" +
@@ -889,13 +894,10 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12O{\"error\":{\"code\":\"INVALID_PUBKEY\",\"message\":\"Invalid validator pubkey format\"}}J\xa1\x01\n" +
 	"\x03404\x12\x99\x01\n" +
 	"\x13Validator not found\"\x81\x01\n" +
-	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}J\xda\x02\n" +
-	"\x03409\x12\xd2\x02\n" +
-	"GIdempotency conflict - same client_request_id with different parameters\"\x86\x02\n" +
-	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xe6\x01\n" +
-	"\x03422\x12\xde\x01\n" +
-	"\x18Validator in wrong state\"\xc1\x01\n" +
-	"\x10application/json\x12\xac\x01{\"error\":{\"code\":\"VALIDATOR_NOT_ACTIVE\",\"message\":\"Cannot exit validator in PENDING_DEPOSIT state\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\",\"current_status\":\"PENDING_DEPOSIT\"}}}\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/ethereum/validators/exit\x12\xcb\x0e\n" +
+	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}J\xf9\x04\n" +
+	"\x03409\x12\xf1\x04\n" +
+	"\xe5\x02Conflict. Either the same client_request_id was reused with different parameters (`OPERATION_ALREADY_EXISTS`), or a validator is in a state that rules out an exit: not active, or active for fewer than 256 epochs (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), or with an exit operation already in progress (`OPERATION_IN_PROGRESS`).\"\x86\x02\n" +
+	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/ethereum/validators/exit\x12\xcb\x0e\n" +
 	"\rExitPreSigned\x12(.public.ethereum.v1.ExitPreSignedRequest\x1a).public.ethereum.v1.ExitPreSignedResponse\"\xe4\r\x92A\xae\r\n" +
 	"\x10Ethereum Actions\x12\x1cGet pre-signed exit messages\x1a\xea\bRequest pre-signed voluntary exit messages from the node operator.\n" +
 	"\n" +
@@ -944,11 +946,14 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xed\x01\n" +
 	"\x03501\x12\xe5\x01\n" +
 	"/Operator does not support fee recipient updates\"\xb1\x01\n" +
-	"\x10application/json\x12\x9c\x01{\"error\":{\"code\":\"FEE_RECIPIENT_UPDATE_NOT_SUPPORTED\",\"message\":\"Operator figment does not support fee recipient updates\",\"details\":{\"operator\":\"figment\"}}}\x82\xd3\xe4\x93\x02*:\x01*\x1a%/v1/ethereum/validators/fee-recipient\x12\xa3\b\n" +
-	"\x16CreateTopupTransaction\x121.public.ethereum.v1.CreateTopupTransactionRequest\x1a2.public.ethereum.v1.CreateTopupTransactionResponse\"\xa1\a\x92A\xf3\x06\n" +
-	"\x15Ethereum Transactions\x12\x19Create top-up transaction\x1a\xb6\x02Build unsigned top-up transactions to add ETH to validator balances.\n" +
+	"\x10application/json\x12\x9c\x01{\"error\":{\"code\":\"FEE_RECIPIENT_UPDATE_NOT_SUPPORTED\",\"message\":\"Operator figment does not support fee recipient updates\",\"details\":{\"operator\":\"figment\"}}}\x82\xd3\xe4\x93\x02*:\x01*\x1a%/v1/ethereum/validators/fee-recipient\x12\xf1\n" +
+	"\n" +
+	"\x16CreateTopupTransaction\x121.public.ethereum.v1.CreateTopupTransactionRequest\x1a2.public.ethereum.v1.CreateTopupTransactionResponse\"\xef\t\x92A\xc1\t\n" +
+	"\x15Ethereum Transactions\x12\x19Create top-up transaction\x1a\xa9\x03Build unsigned top-up transactions to add ETH to validator balances.\n" +
 	"\n" +
 	"**Signing:** Anyone can fund a top-up (`signer: ANY`).\n" +
+	"\n" +
+	"Each validator may be listed once per request, in any hex spelling; a repeat would fund the same validator twice.\n" +
 	"\n" +
 	"**Verification:** Before signing, verify:\n" +
 	"- `inputs` matches your request\n" +
@@ -956,15 +961,28 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"- `unsigned_transaction.value` matches expected amountJ\xf9\x02\n" +
 	"\x03200\x12\xf1\x02\n" +
 	",Unsigned transactions generated successfully\"\xc0\x02\n" +
-	"\x10application/json\x12\xab\x02{\"transactions\":[{\"inputs\":{\"pubkey\":\"0x8a2f5c3b...\",\"amount_gwei\":\"1000000000\",\"contract_address\":\"0x00000000219ab540356cBB839Cbe05303d7705Fa\"},\"unsigned_transaction\":{\"chain_id\":\"1\",\"to\":\"0x00000000219ab540356cBB839Cbe05303d7705Fa\",\"data\":\"0x22895118...\",\"gas_limit\":\"150000\"},\"signers\":[\"ANY\"]}]}J\x89\x01\n" +
-	"\x03400\x12\x81\x01\n" +
-	"\x1aInvalid request parameters\"c\n" +
-	"\x10application/json\x12O{\"error\":{\"code\":\"INVALID_PUBKEY\",\"message\":\"Invalid validator pubkey format\"}}\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/ethereum/transactions/topup\x12\xb2\n" +
-	"\n" +
-	"\x19CreateWithdrawTransaction\x124.public.ethereum.v1.CreateWithdrawTransactionRequest\x1a5.public.ethereum.v1.CreateWithdrawTransactionResponse\"\xa7\t\x92A\xf6\b\n" +
-	"\x15Ethereum Transactions\x12\x1dCreate withdrawal transaction\x1a\x8b\x03Build unsigned EL withdrawal transactions (partial or full).\n" +
+	"\x10application/json\x12\xab\x02{\"transactions\":[{\"inputs\":{\"pubkey\":\"0x8a2f5c3b...\",\"amount_gwei\":\"1000000000\",\"contract_address\":\"0x00000000219ab540356cBB839Cbe05303d7705Fa\"},\"unsigned_transaction\":{\"chain_id\":\"1\",\"to\":\"0x00000000219ab540356cBB839Cbe05303d7705Fa\",\"data\":\"0x22895118...\",\"gas_limit\":\"150000\"},\"signers\":[\"ANY\"]}]}J\xe4\x02\n" +
+	"\x03400\x12\xdc\x02\n" +
+	"\xf4\x01Invalid request parameters. A validator listed more than once is rejected with `DUPLICATE_PUBKEYS`; its `index` and `conflicting_index` details name the repeat and the entry it repeats. This is decided from the request alone, before any lookup.\"c\n" +
+	"\x10application/json\x12O{\"error\":{\"code\":\"INVALID_PUBKEY\",\"message\":\"Invalid validator pubkey format\"}}\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/ethereum/transactions/topup\x12\xa3\x1d\n" +
+	"\x19CreateWithdrawTransaction\x124.public.ethereum.v1.CreateWithdrawTransactionRequest\x1a5.public.ethereum.v1.CreateWithdrawTransactionResponse\"\x98\x1c\x92A\xe7\x1b\n" +
+	"\x15Ethereum Transactions\x12\x1dCreate withdrawal transaction\x1a\xc0\n" +
+	"Build unsigned EL withdrawal transactions (partial or full).\n" +
 	"\n" +
 	"Use `amount_gwei: 0` for full withdrawal (max available).\n" +
+	"\n" +
+	"**Chain rules (EIP-7002 drops the request on-chain, after spending the fee, if any fails):**\n" +
+	"- The validator must be on the beacon chain, active, and not exiting or exited.\n" +
+	"- It must have been active for at least 256 epochs (SHARD_COMMITTEE_PERIOD).\n" +
+	"- A full exit requires execution credentials (0x01 or 0x02); a partial request requires 0x02.\n" +
+	"- A full exit is dropped while a partial withdrawal is pending. A partial amount is capped at the balance above 32 ETH after subtracting pending partial withdrawals.\n" +
+	"\n" +
+	"**Staking Router policy (stricter than the chain rules):**\n" +
+	"- Every request requires 0x02 compounding credentials, including a full exit.\n" +
+	"- A partial amount exceeding the remaining balance above 32 ETH after pending withdrawals is rejected.\n" +
+	"- Pending withdrawals are checked before transaction construction, but the queue can change before a request reaches the chain.\n" +
+	"\n" +
+	"Each validator may be listed once per request, in any hex spelling.\n" +
 	"\n" +
 	"**Signing:** Must be signed by withdrawal address (`signer: WITHDRAWAL_ADDRESS`).\n" +
 	"\n" +
@@ -974,14 +992,19 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"- `unsigned_transaction.from` is your withdrawal addressJ\xff\x02\n" +
 	"\x03200\x12\xf7\x02\n" +
 	",Unsigned transactions generated successfully\"\xc6\x02\n" +
-	"\x10application/json\x12\xb1\x02{\"transactions\":[{\"inputs\":{\"pubkey\":\"0x8a2f5c3b...\",\"amount_gwei\":\"0\",\"contract_address\":\"0x00000961Ef480Eb55e80D19ad83579A64c007002\"},\"unsigned_transaction\":{\"chain_id\":\"1\",\"to\":\"0x00000961Ef480Eb55e80D19ad83579A64c007002\",\"data\":\"0x8a2f5c3b...\",\"gas_limit\":\"100000\"},\"signers\":[\"WITHDRAWAL_ADDRESS\"]}]}J\x89\x01\n" +
-	"\x03400\x12\x81\x01\n" +
-	"\x1aInvalid request parameters\"c\n" +
+	"\x10application/json\x12\xb1\x02{\"transactions\":[{\"inputs\":{\"pubkey\":\"0x8a2f5c3b...\",\"amount_gwei\":\"0\",\"contract_address\":\"0x00000961Ef480Eb55e80D19ad83579A64c007002\"},\"unsigned_transaction\":{\"chain_id\":\"1\",\"to\":\"0x00000961Ef480Eb55e80D19ad83579A64c007002\",\"data\":\"0x8a2f5c3b...\",\"gas_limit\":\"100000\"},\"signers\":[\"WITHDRAWAL_ADDRESS\"]}]}J\xe4\x02\n" +
+	"\x03400\x12\xdc\x02\n" +
+	"\xf4\x01Invalid request parameters. A validator listed more than once is rejected with `DUPLICATE_PUBKEYS`; its `index` and `conflicting_index` details name the repeat and the entry it repeats. This is decided from the request alone, before any lookup.\"c\n" +
 	"\x10application/json\x12O{\"error\":{\"code\":\"INVALID_PUBKEY\",\"message\":\"Invalid validator pubkey format\"}}J\xa1\x01\n" +
 	"\x03404\x12\x99\x01\n" +
 	"\x13Validator not found\"\x81\x01\n" +
-	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/ethereum/transactions/withdraw\x12\xde*\n" +
-	"\x1cCreateConsolidateTransaction\x127.public.ethereum.v1.CreateConsolidateTransactionRequest\x1a8.public.ethereum.v1.CreateConsolidateTransactionResponse\"\xca)\x92A\x96)\n" +
+	"\x10application/json\x12m{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"Validator not found\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}J\xde\t\n" +
+	"\x03409\x12\xd6\t\n" +
+	"\xc1\bPrecondition failed. The validator is already exited (`VALIDATOR_ALREADY_EXITED`), is already exiting (`VALIDATOR_ALREADY_EXITING`), or is not active, has not been active for 256 epochs, or is provisioned but not on the beacon chain yet (`VALIDATOR_NOT_ACTIVE`; the `cl_status` detail carries the consensus-layer status when that is the reason). A pubkey the consensus layer has no record of is 404 `VALIDATOR_NOT_FOUND`, unless it is one of your organisation's provisioned validators, which is 409 `VALIDATOR_NOT_ACTIVE`. Also returned when the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`) or do not match a supplied `withdrawal_address` (`WITHDRAWAL_CREDENTIALS_MISMATCH`), the validator is the source of a pending consolidation (`OPERATION_IN_PROGRESS`), or a partial amount exceeds the available balance (`INSUFFICIENT_BALANCE`).\n" +
+	"\n" +
+	"No transaction is built in any of these cases. All precondition failures on this endpoint are served as 409: the REST gateway derives the HTTP status from the gRPC code, and every code above maps to FAILED_PRECONDITION.\"\x8f\x01\n" +
+	"\x10application/json\x12{{\"error\":{\"code\":\"VALIDATOR_ALREADY_EXITED\",\"message\":\"validator has already exited\",\"details\":{\"pubkey\":\"0x8a2f5c3b...\"}}}\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/ethereum/transactions/withdraw\x12\xbd,\n" +
+	"\x1cCreateConsolidateTransaction\x127.public.ethereum.v1.CreateConsolidateTransactionRequest\x1a8.public.ethereum.v1.CreateConsolidateTransactionResponse\"\xa9+\x92A\xf5*\n" +
 	"\x15Ethereum Transactions\x12 Create consolidation transaction\x1a\xb1\x16Build unsigned consolidation transactions to merge validators (EIP-7251).\n" +
 	"\n" +
 	"Every pair is checked against the consensus layer before any transaction is built. A failure rejects the whole request.\n" +
@@ -1007,9 +1030,9 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12\xd1\x02{\"transactions\":[{\"inputs\":{\"source_pubkey\":\"0x8a2f5c3b...\",\"target_pubkey\":\"0x9b3e6d4c...\",\"contract_address\":\"0x0000bbddc7ce488642fb579f8b00f3a590007251\"},\"unsigned_transaction\":{\"chain_id\":\"1\",\"to\":\"0x0000bbddc7ce488642fb579f8b00f3a590007251\",\"data\":\"0x8a2f5c3b...9b3e6d4c...\",\"gas_limit\":\"100000\"},\"signers\":[\"WITHDRAWAL_ADDRESS\"]}]}J\xd8\x01\n" +
 	"\x03404\x12\xd0\x01\n" +
 	"$Source or target validator not found\"\xa7\x01\n" +
-	"\x10application/json\x12\x92\x01{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"consolidations[0]: source validator not found\",\"details\":{\"field\":\"source_pubkey\",\"index\":\"0\"}}}J\xd3\t\n" +
-	"\x03409\x12\xcb\t\n" +
-	"\xb9\aPrecondition failed. Either the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`, `WITHDRAWAL_CREDENTIALS_MISMATCH`), source and target are the same without eligible credentials to switch to compounding (`CONSOLIDATION_SAME_VALIDATOR`), a validator fails the consensus-layer eligibility gates: not active / not active long enough (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), already exited (`VALIDATOR_ALREADY_EXITED`), or the source has a queued partial withdrawal (`OPERATION_IN_PROGRESS`).\n" +
+	"\x10application/json\x12\x92\x01{\"error\":{\"code\":\"VALIDATOR_NOT_FOUND\",\"message\":\"consolidations[0]: source validator not found\",\"details\":{\"field\":\"source_pubkey\",\"index\":\"0\"}}}J\xb2\v\n" +
+	"\x03409\x12\xaa\v\n" +
+	"\x98\tPrecondition failed. Either the withdrawal credentials are incompatible (`INCOMPATIBLE_WITHDRAWAL_CREDENTIALS`, `WITHDRAWAL_CREDENTIALS_MISMATCH`), source and target are the same without eligible credentials to switch to compounding (`CONSOLIDATION_SAME_VALIDATOR`), a validator fails the consensus-layer eligibility gates: not active / not active long enough / provisioned but not on the beacon chain yet (`VALIDATOR_NOT_ACTIVE`), already exiting (`VALIDATOR_ALREADY_EXITING`), already exited (`VALIDATOR_ALREADY_EXITED`), or the source has a queued partial withdrawal (`OPERATION_IN_PROGRESS`). A pubkey the consensus layer has no record of is 404 `VALIDATOR_NOT_FOUND`, unless it is one of your organisation's provisioned validators, which is 409 `VALIDATOR_NOT_ACTIVE`.\n" +
 	"\n" +
 	"A validator named as the source of more than one consolidation, or as both a source and a target, is rejected with `DUPLICATE_PUBKEYS` as a 400 instead — that is a request-shape error, decided before any consensus-layer read.\n" +
 	"\n" +
