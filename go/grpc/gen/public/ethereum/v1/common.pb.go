@@ -304,6 +304,11 @@ const (
 	// the in-flight BS-5140 branch, and claiming it here would collide
 	// whichever of the two merges second.
 	ErrorCode_INVALID_REQUEST ErrorCode = 57
+	// A visible operator selected for provision lacks effective provision support,
+	// including a tenant restriction. Returns HTTP 400 / gRPC InvalidArgument.
+	// BS-5191 deliberately changes provision only; established exit-CL and
+	// pre-signed-exit capability gaps retain HTTP 501 for caller compatibility.
+	ErrorCode_PROVISION_CAPABILITY_UNSUPPORTED ErrorCode = 59
 	// Authentication/Authorization Errors (401, 403)
 	ErrorCode_INVALID_TOKEN            ErrorCode = 20
 	ErrorCode_TOKEN_EXPIRED            ErrorCode = 21
@@ -398,6 +403,7 @@ var (
 		18: "INVALID_SIGNATURE",
 		19: "UNSUPPORTED_EXIT_TARGET_TYPE",
 		57: "INVALID_REQUEST",
+		59: "PROVISION_CAPABILITY_UNSUPPORTED",
 		20: "INVALID_TOKEN",
 		21: "TOKEN_EXPIRED",
 		22: "INSUFFICIENT_PERMISSIONS",
@@ -466,6 +472,7 @@ var (
 		"INVALID_SIGNATURE":                   18,
 		"UNSUPPORTED_EXIT_TARGET_TYPE":        19,
 		"INVALID_REQUEST":                     57,
+		"PROVISION_CAPABILITY_UNSUPPORTED":    59,
 		"INVALID_TOKEN":                       20,
 		"TOKEN_EXPIRED":                       21,
 		"INSUFFICIENT_PERMISSIONS":            22,
@@ -711,7 +718,7 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"\x06EXITED\x10\x06\x12\r\n" +
 	"\tWITHDRAWN\x10\a\x12\v\n" +
-	"\aSLASHED\x10\b*\xe3\r\n" +
+	"\aSLASHED\x10\b*\x89\x0e\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16UNSPECIFIED_ERROR_CODE\x10\x00\x12\x12\n" +
 	"\x0eINVALID_PUBKEY\x10\x01\x12\x13\n" +
@@ -734,7 +741,8 @@ const file_public_ethereum_v1_common_proto_rawDesc = "" +
 	"\x13INVALID_TRANSACTION\x10\x11\x12\x15\n" +
 	"\x11INVALID_SIGNATURE\x10\x12\x12 \n" +
 	"\x1cUNSUPPORTED_EXIT_TARGET_TYPE\x10\x13\x12\x13\n" +
-	"\x0fINVALID_REQUEST\x109\x12\x11\n" +
+	"\x0fINVALID_REQUEST\x109\x12$\n" +
+	" PROVISION_CAPABILITY_UNSUPPORTED\x10;\x12\x11\n" +
 	"\rINVALID_TOKEN\x10\x14\x12\x11\n" +
 	"\rTOKEN_EXPIRED\x10\x15\x12\x1c\n" +
 	"\x18INSUFFICIENT_PERMISSIONS\x10\x16\x12\x17\n" +

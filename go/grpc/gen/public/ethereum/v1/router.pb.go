@@ -769,7 +769,7 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x06pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x06pubkey\x127\n" +
 	"\x15fee_recipient_address\x18\x02 \x01(\tB\x03\xe0A\x02R\x13feeRecipientAddress\"Y\n" +
 	"\x1aUpdateFeeRecipientResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\xbb\xc3\x01\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\x91\xc7\x01\n" +
 	"\x14StakingRouterService\x12\x9d\x05\n" +
 	"\fGetOperation\x12'.public.ethereum.v1.GetOperationRequest\x1a(.public.ethereum.v1.GetOperationResponse\"\xb9\x04\x92A\x91\x04\n" +
 	"\n" +
@@ -830,10 +830,9 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"This endpoint reads from the Staking Router database - no node operator call is made.J\xd1\x01\n" +
 	"\x03200\x12\xc9\x01\n" +
 	"%Exit artifacts retrieved successfully\"\x9f\x01\n" +
-	"\x10application/json\x12\x8a\x01{\"artifacts\":[{\"pubkey\":\"0x8a2f5c3b...\",\"encrypted_exit_message\":\"aGVsbG8gd29ybGQ=\",\"validator_index\":12345,\"fork_version\":\"0x00000000\"}]}\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/ethereum/validators/artifacts/exit\x12\xe8\x14\n" +
-	"\tProvision\x12$.public.ethereum.v1.ProvisionRequest\x1a%.public.ethereum.v1.ProvisionResponse\"\x8d\x14\x92A\xdd\x13\n" +
-	"\x10Ethereum Actions\x12\x14Provision validators\x1a\xba\n" +
-	"Request provisioning of new validators via a node operator.\n" +
+	"\x10application/json\x12\x8a\x01{\"artifacts\":[{\"pubkey\":\"0x8a2f5c3b...\",\"encrypted_exit_message\":\"aGVsbG8gd29ybGQ=\",\"validator_index\":12345,\"fork_version\":\"0x00000000\"}]}\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/ethereum/validators/artifacts/exit\x12\xbe\x18\n" +
+	"\tProvision\x12$.public.ethereum.v1.ProvisionRequest\x1a%.public.ethereum.v1.ProvisionResponse\"\xe3\x17\x92A\xb3\x17\n" +
+	"\x10Ethereum Actions\x12\x14Provision validators\x1a\x88\x0fRequest provisioning of new validators via a node operator. A visible, known operator without effective provision support (including tenant-disabled provision) returns HTTP 400 PROVISION_CAPABILITY_UNSUPPORTED with field=operator, operator=<key>, and capability=provision. This is a client-selection error because startup rejects defective provision declarations; it avoids classifying this rejection as a server error. This change is deliberately provision-only: exit-CL and pre-signed-exit capability gaps retain their established 501 FEATURE_NOT_SUPPORTED contract for caller compatibility. Unknown or invisible operators remain INVALID_OPERATOR.\n" +
 	"\n" +
 	"Returns an operation ID for polling. Poll `GET /ethereum/operations/{id}` until status is SUCCEEDED.\n" +
 	"Upon completion, artifacts will contain deposit data for each validator.\n" +
@@ -854,16 +853,13 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"'accepted, keep polling'. To attempt the work again, use a fresh client_request_id.J\xac\x01\n" +
 	"\x03202\x12\xa4\x01\n" +
 	"!Operation accepted and processing\"\x7f\n" +
-	"\x10application/json\x12k{\"operation\":{\"id\":\"op_1234\",\"type\":\"PROVISION\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}J\xba\x01\n" +
-	"\x03400\x12\xb2\x01\n" +
-	"\x1aInvalid request parameters\"\x93\x01\n" +
-	"\x10application/json\x12\x7f{\"error\":{\"code\":\"INVALID_ADDRESS\",\"message\":\"Invalid withdrawal address format\",\"details\":{\"withdrawal_address\":\"0xinvalid\"}}}J\xda\x02\n" +
+	"\x10application/json\x12k{\"operation\":{\"id\":\"op_1234\",\"type\":\"PROVISION\",\"status\":\"PROCESSING\",\"created_at\":\"2026-02-05T10:00:00Z\"}}J\xad\x02\n" +
+	"\x03400\x12\xa5\x02\n" +
+	"SInvalid request parameters or visible operator lacks effective provision capability\"\xcd\x01\n" +
+	"\x10application/json\x12\xb8\x01{\"error\":{\"code\":\"PROVISION_CAPABILITY_UNSUPPORTED\",\"message\":\"operator galaxy does not support provision\",\"details\":{\"field\":\"operator\",\"operator\":\"galaxy\",\"capability\":\"provision\"}}}J\xda\x02\n" +
 	"\x03409\x12\xd2\x02\n" +
 	"GIdempotency conflict - same client_request_id with different parameters\"\x86\x02\n" +
-	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xe8\x01\n" +
-	"\x03501\x12\xe0\x01\n" +
-	")Operator does not support this capability\"\xb2\x01\n" +
-	"\x10application/json\x12\x9d\x01{\"error\":{\"code\":\"FEATURE_NOT_SUPPORTED\",\"message\":\"Operator does not support provision\",\"details\":{\"operator\":\"unknown_operator\",\"capability\":\"provision\"}}}J\xc1\x01\n" +
+	"\x10application/json\x12\xf1\x01{\"error\":{\"code\":\"OPERATION_ALREADY_EXISTS\",\"message\":\"operation with client_request_id already exists: 49bf80cb-c7ca-4082-a526-8afab545cc62\",\"details\":{\"client_request_id\":\"49bf80cb-c7ca-4082-a526-8afab545cc62\",\"reason\":\"payload differs\"}}}J\xc1\x01\n" +
 	"\x03502\x12\xb9\x01\n" +
 	"\x1dNode operator API unavailable\"\x97\x01\n" +
 	"\x10application/json\x12\x82\x01{\"error\":{\"code\":\"OPERATOR_UNAVAILABLE\",\"message\":\"Node operator API is temporarily unavailable\",\"details\":{\"operator\":\"galaxy\"}}}\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/ethereum/validators/provision\x12\xb9\x12\n" +

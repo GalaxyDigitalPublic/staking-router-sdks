@@ -6700,7 +6700,6 @@ type StakingRouterServiceProvisionResponse struct {
 	JSON202      *interface{}
 	JSON400      *interface{}
 	JSON409      *interface{}
-	JSON501      *interface{}
 	JSON502      *interface{}
 }
 
@@ -8438,13 +8437,6 @@ func ParseStakingRouterServiceProvisionResponse(rsp *http.Response) (*StakingRou
 			return nil, err
 		}
 		response.JSON409 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON501 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
 		var dest interface{}
