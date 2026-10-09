@@ -1063,11 +1063,12 @@ type RewardEntry struct {
 	// In daily-rollup mode: value at end_epoch (closing position for the day).
 	EffectiveBalanceGwei *string `json:"effective_balance_gwei,omitempty"`
 
-	// EndEpoch End epoch (set in daily-rollup mode).
+	// EndEpoch End epoch of the range this row covers. Daily-rollup mode: last epoch
+	// of the day. Per-epoch mode: equals epoch.
 	EndEpoch *string `json:"end_epoch,omitempty"`
 
-	// Epoch Epoch number. In per-epoch mode: the exact epoch. In daily-rollup mode:
-	// the first epoch of the day's range (same as start_epoch).
+	// Epoch Epoch number; always equals start_epoch. Per-epoch mode: the exact
+	// epoch. Daily-rollup mode: the first epoch of the day's range.
 	Epoch *string `json:"epoch,omitempty"`
 
 	// Operator Node operator name.
@@ -1079,7 +1080,8 @@ type RewardEntry struct {
 	// Rewards Breakdown of rewards by type (consensus, fees, mev).
 	Rewards *[]RewardBreakdown `json:"rewards,omitempty"`
 
-	// StartEpoch Start epoch (set in daily-rollup mode).
+	// StartEpoch Start epoch of the range this row covers. Daily-rollup mode: first
+	// epoch of the day. Per-epoch mode: equals epoch.
 	StartEpoch *string `json:"start_epoch,omitempty"`
 
 	// Timestamp ISO 8601 timestamp for the epoch or day.
@@ -2165,7 +2167,8 @@ type PublicSolanaV1RewardBreakdown struct {
 
 // PublicSolanaV1RewardEntry RewardEntry represents rewards for a single stake account in a single epoch or day.
 type PublicSolanaV1RewardEntry struct {
-	// EndEpoch End epoch (set in daily-rollup mode).
+	// EndEpoch End epoch of the range this row covers. Daily-rollup mode: last epoch
+	// of the day. Per-epoch mode: equals epoch.
 	EndEpoch *string `json:"end_epoch,omitempty"`
 
 	// Epoch Epoch number (set in per-epoch mode).
@@ -2180,7 +2183,8 @@ type PublicSolanaV1RewardEntry struct {
 	// StakeAccount Solana stake account address.
 	StakeAccount *string `json:"stake_account,omitempty"`
 
-	// StartEpoch Start epoch (set in daily-rollup mode).
+	// StartEpoch Start epoch of the range this row covers. Daily-rollup mode: first
+	// epoch of the day. Per-epoch mode: equals epoch.
 	StartEpoch *string `json:"start_epoch,omitempty"`
 
 	// Timestamp ISO 8601 timestamp for the epoch or day.

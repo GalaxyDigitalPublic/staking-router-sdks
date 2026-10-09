@@ -217,12 +217,14 @@ type RewardEntry struct {
 	Operator string `protobuf:"bytes,2,opt,name=operator,proto3" json:"operator,omitempty"`
 	// ISO 8601 timestamp for the epoch or day.
 	Timestamp string `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	// Epoch number. In per-epoch mode: the exact epoch. In daily-rollup mode:
-	// the first epoch of the day's range (same as start_epoch).
+	// Epoch number; always equals start_epoch. Per-epoch mode: the exact
+	// epoch. Daily-rollup mode: the first epoch of the day's range.
 	Epoch int64 `protobuf:"varint,4,opt,name=epoch,proto3" json:"epoch,omitempty"`
-	// Start epoch (set in daily-rollup mode).
+	// Start epoch of the range this row covers. Daily-rollup mode: first
+	// epoch of the day. Per-epoch mode: equals epoch.
 	StartEpoch int64 `protobuf:"varint,5,opt,name=start_epoch,json=startEpoch,proto3" json:"start_epoch,omitempty"`
-	// End epoch (set in daily-rollup mode).
+	// End epoch of the range this row covers. Daily-rollup mode: last epoch
+	// of the day. Per-epoch mode: equals epoch.
 	EndEpoch int64 `protobuf:"varint,6,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
 	// Breakdown of rewards by type (consensus, fees, mev).
 	Rewards []*RewardBreakdown `protobuf:"bytes,7,rep,name=rewards,proto3" json:"rewards,omitempty"`

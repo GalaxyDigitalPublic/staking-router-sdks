@@ -4153,19 +4153,19 @@
             "type": "string",
             "format": "int64",
             "example": 300000,
-            "description": "Epoch number. In per-epoch mode: the exact epoch. In daily-rollup mode:\nthe first epoch of the day's range (same as start_epoch)."
+            "description": "Epoch number; always equals start_epoch. Per-epoch mode: the exact\nepoch. Daily-rollup mode: the first epoch of the day's range."
           },
           "start_epoch": {
             "type": "string",
             "format": "int64",
             "example": 300000,
-            "description": "Start epoch (set in daily-rollup mode)."
+            "description": "Start epoch of the range this row covers. Daily-rollup mode: first\nepoch of the day. Per-epoch mode: equals epoch."
           },
           "end_epoch": {
             "type": "string",
             "format": "int64",
             "example": 300224,
-            "description": "End epoch (set in daily-rollup mode)."
+            "description": "End epoch of the range this row covers. Daily-rollup mode: last epoch\nof the day. Per-epoch mode: equals epoch."
           },
           "rewards": {
             "type": "array",
@@ -5848,13 +5848,13 @@
             "type": "string",
             "format": "int64",
             "example": 700,
-            "description": "Start epoch (set in daily-rollup mode)."
+            "description": "Start epoch of the range this row covers. Daily-rollup mode: first\nepoch of the day. Per-epoch mode: equals epoch."
           },
           "end_epoch": {
             "type": "string",
             "format": "int64",
             "example": 702,
-            "description": "End epoch (set in daily-rollup mode)."
+            "description": "End epoch of the range this row covers. Daily-rollup mode: last epoch\nof the day. Per-epoch mode: equals epoch."
           },
           "rewards": {
             "type": "array",
