@@ -42,12 +42,15 @@ type GetRewardsRequest struct {
 	EndEpoch int64 `protobuf:"varint,6,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
 	// Denomination for reward amounts: "SOL" (default) or "lamports".
 	Denomination string `protobuf:"bytes,7,opt,name=denomination,proto3" json:"denomination,omitempty"`
-	// Maximum number of results to return per page.
+	// Maximum number of results to return per page (max: 250). A negative value
+	// or one above the maximum is rejected with 400 INVALID_PAGE_SIZE.
 	//
 	// page_size == 0 with an empty next_cursor is a sentinel meaning
 	// "auto-pagination": every page is fetched and merged server-side, and the
 	// complete result set is returned with an empty metadata.next_cursor.
-	// Clients MUST NOT interpret 0 as "return zero results".
+	// Clients MUST NOT interpret 0 as "return zero results". Auto-pagination is
+	// rejected with 400 RESULT_SET_TOO_LARGE above 100,000 entries; use an
+	// explicit page_size and next_cursor for those.
 	//
 	// For pass-through (manual) pagination, set page_size to the desired page
 	// size and use the returned metadata.next_cursor to advance through pages.

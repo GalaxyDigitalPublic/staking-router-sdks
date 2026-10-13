@@ -5501,7 +5501,7 @@
           "page_size": {
             "type": "integer",
             "format": "int32",
-            "description": "Maximum number of results to return per page.\n\npage_size == 0 with an empty next_cursor is a sentinel meaning\n\"auto-pagination\": every page is fetched and merged server-side, and the\ncomplete result set is returned with an empty metadata.next_cursor.\nClients MUST NOT interpret 0 as \"return zero results\".\n\nFor pass-through (manual) pagination, set page_size to the desired page\nsize and use the returned metadata.next_cursor to advance through pages.\nThe same page_size must be supplied on all subsequent requests for the\nsame pagination session."
+            "description": "Maximum number of results to return per page (max: 250). A negative value\nor one above the maximum is rejected with 400 INVALID_PAGE_SIZE.\n\npage_size == 0 with an empty next_cursor is a sentinel meaning\n\"auto-pagination\": every page is fetched and merged server-side, and the\ncomplete result set is returned with an empty metadata.next_cursor.\nClients MUST NOT interpret 0 as \"return zero results\". Auto-pagination is\nrejected with 400 RESULT_SET_TOO_LARGE above 100,000 entries; use an\nexplicit page_size and next_cursor for those.\n\nFor pass-through (manual) pagination, set page_size to the desired page\nsize and use the returned metadata.next_cursor to advance through pages.\nThe same page_size must be supplied on all subsequent requests for the\nsame pagination session."
           },
           "next_cursor": {
             "type": "string",
@@ -5701,9 +5701,8 @@
             },
             "description": "Stake accounts matching the request filters."
           },
-          "next_cursor": {
-            "type": "string",
-            "description": "Pagination token for the next page.\nEmpty string when there are no more results."
+          "metadata": {
+            "$ref": "#/components/schemas/public.solana.v1.PageInfo"
           }
         },
         "description": "ListSolanaStakeAccountsResponse is the response for listing stake accounts."

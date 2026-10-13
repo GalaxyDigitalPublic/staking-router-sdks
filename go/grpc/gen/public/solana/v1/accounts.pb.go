@@ -335,9 +335,10 @@ type ListSolanaStakeAccountsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Stake accounts matching the request filters.
 	Accounts []*SolanaStakeAccountInfo `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
-	// Pagination token for the next page.
-	// Empty string when there are no more results.
-	NextCursor    string `protobuf:"bytes,2,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
+	// Pagination metadata. `metadata.next_cursor` is always emitted (empty
+	// when there are no more pages). `metadata.total_count` is not computed
+	// for this endpoint and is omitted.
+	Metadata      *PageInfo `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -379,11 +380,11 @@ func (x *ListSolanaStakeAccountsResponse) GetAccounts() []*SolanaStakeAccountInf
 	return nil
 }
 
-func (x *ListSolanaStakeAccountsResponse) GetNextCursor() string {
+func (x *ListSolanaStakeAccountsResponse) GetMetadata() *PageInfo {
 	if x != nil {
-		return x.NextCursor
+		return x.Metadata
 	}
-	return ""
+	return nil
 }
 
 // GetSolanaStakeAccountRequest is the request for retrieving a single stake account.
@@ -550,11 +551,10 @@ const file_public_solana_v1_accounts_proto_rawDesc = "" +
 	"\xd0\x01*\x1eListSolanaStakeAccountsRequest2\xad\x01Request to list stake accounts (delegators) tracked by the caller.\n" +
 	"\n" +
 	"All filters are optional. Returns all tracked stake accounts for the tenant when no filters are provided.B\x11\n" +
-	"\x0foperator_params\"\x88\x01\n" +
+	"\x0foperator_params\"\x9f\x01\n" +
 	"\x1fListSolanaStakeAccountsResponse\x12D\n" +
-	"\baccounts\x18\x01 \x03(\v2(.public.solana.v1.SolanaStakeAccountInfoR\baccounts\x12\x1f\n" +
-	"\vnext_cursor\x18\x02 \x01(\tR\n" +
-	"nextCursor\"d\n" +
+	"\baccounts\x18\x01 \x03(\v2(.public.solana.v1.SolanaStakeAccountInfoR\baccounts\x126\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x1a.public.solana.v1.PageInfoR\bmetadata\"d\n" +
 	"\x1cGetSolanaStakeAccountRequest\x12(\n" +
 	"\rstake_account\x18\x01 \x01(\tB\x03\xe0A\x02R\fstakeAccount\x12\x1a\n" +
 	"\boperator\x18\x02 \x01(\tR\boperator\"\xac\x02\n" +
@@ -597,6 +597,7 @@ var file_public_solana_v1_accounts_proto_goTypes = []any{
 	(*GetSolanaStakeAccountRequest)(nil),    // 5: public.solana.v1.GetSolanaStakeAccountRequest
 	(*GetSolanaStakeAccountResponse)(nil),   // 6: public.solana.v1.GetSolanaStakeAccountResponse
 	(*GalaxySolanaParams)(nil),              // 7: public.solana.v1.GalaxySolanaParams
+	(*PageInfo)(nil),                        // 8: public.solana.v1.PageInfo
 }
 var file_public_solana_v1_accounts_proto_depIdxs = []int32{
 	0, // 0: public.solana.v1.SolanaStakeAccountInfo.status:type_name -> public.solana.v1.SolanaStakeAccountStatus
@@ -604,13 +605,14 @@ var file_public_solana_v1_accounts_proto_depIdxs = []int32{
 	0, // 2: public.solana.v1.ListSolanaStakeAccountsRequest.status:type_name -> public.solana.v1.SolanaStakeAccountStatus
 	7, // 3: public.solana.v1.ListSolanaStakeAccountsRequest.galaxy_params:type_name -> public.solana.v1.GalaxySolanaParams
 	2, // 4: public.solana.v1.ListSolanaStakeAccountsResponse.accounts:type_name -> public.solana.v1.SolanaStakeAccountInfo
-	0, // 5: public.solana.v1.GetSolanaStakeAccountResponse.status:type_name -> public.solana.v1.SolanaStakeAccountStatus
-	1, // 6: public.solana.v1.GetSolanaStakeAccountResponse.validator_info:type_name -> public.solana.v1.SolanaValidatorInfo
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	8, // 5: public.solana.v1.ListSolanaStakeAccountsResponse.metadata:type_name -> public.solana.v1.PageInfo
+	0, // 6: public.solana.v1.GetSolanaStakeAccountResponse.status:type_name -> public.solana.v1.SolanaStakeAccountStatus
+	1, // 7: public.solana.v1.GetSolanaStakeAccountResponse.validator_info:type_name -> public.solana.v1.SolanaValidatorInfo
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_public_solana_v1_accounts_proto_init() }

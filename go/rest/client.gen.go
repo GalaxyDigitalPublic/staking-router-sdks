@@ -1927,12 +1927,15 @@ type PublicSolanaV1GetRewardsRequest struct {
 	// Multiple operators may be specified.
 	Operators *[]string `json:"operators,omitempty"`
 
-	// PageSize Maximum number of results to return per page.
+	// PageSize Maximum number of results to return per page (max: 250). A negative value
+	// or one above the maximum is rejected with 400 INVALID_PAGE_SIZE.
 	//
 	// page_size == 0 with an empty next_cursor is a sentinel meaning
 	// "auto-pagination": every page is fetched and merged server-side, and the
 	// complete result set is returned with an empty metadata.next_cursor.
-	// Clients MUST NOT interpret 0 as "return zero results".
+	// Clients MUST NOT interpret 0 as "return zero results". Auto-pagination is
+	// rejected with 400 RESULT_SET_TOO_LARGE above 100,000 entries; use an
+	// explicit page_size and next_cursor for those.
 	//
 	// For pass-through (manual) pagination, set page_size to the desired page
 	// size and use the returned metadata.next_cursor to advance through pages.
@@ -2060,9 +2063,9 @@ type PublicSolanaV1ListSolanaStakeAccountsResponse struct {
 	// Accounts Stake accounts matching the request filters.
 	Accounts *[]PublicSolanaV1SolanaStakeAccountInfo `json:"accounts,omitempty"`
 
-	// NextCursor Pagination token for the next page.
-	// Empty string when there are no more results.
-	NextCursor *string `json:"next_cursor,omitempty"`
+	// Metadata PageInfo contains pagination metadata for list responses. Mirrors
+	// public.ethereum.v1.PageInfo so the two chains expose the same shape.
+	Metadata *PublicSolanaV1PageInfo `json:"metadata,omitempty"`
 }
 
 // PublicSolanaV1MergeInstructionInputs Instruction inputs for a Merge transaction.
