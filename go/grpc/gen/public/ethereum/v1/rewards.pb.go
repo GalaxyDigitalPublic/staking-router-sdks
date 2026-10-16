@@ -37,8 +37,6 @@ type GetRewardsRequest struct {
 	// End epoch number. Use with start_epoch for per-epoch mode.
 	// Note: 0 is treated as "not set"; epoch 0 (genesis) cannot be queried.
 	EndEpoch int64 `protobuf:"varint,6,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
-	// Denomination for reward amounts: "ETH" (default) or "wei".
-	Denomination string `protobuf:"bytes,7,opt,name=denomination,proto3" json:"denomination,omitempty"`
 	// Maximum number of results to return.
 	PageSize int32 `protobuf:"varint,98,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Pagination token from previous response.
@@ -110,13 +108,6 @@ func (x *GetRewardsRequest) GetEndEpoch() int64 {
 		return x.EndEpoch
 	}
 	return 0
-}
-
-func (x *GetRewardsRequest) GetDenomination() string {
-	if x != nil {
-		return x.Denomination
-	}
-	return ""
 }
 
 func (x *GetRewardsRequest) GetPageSize() int32 {
@@ -233,11 +224,11 @@ type RewardEntry struct {
 	// Effective balance in Gwei at epoch entry (the locked balance used to
 	// compute attestation and sync rewards for this epoch).
 	// In daily-rollup mode: value at end_epoch (closing position for the day).
-	EffectiveBalanceGwei int64 `protobuf:"varint,9,opt,name=effective_balance_gwei,json=effectiveBalanceGwei,proto3" json:"effective_balance_gwei,omitempty"`
+	EffectiveBalanceGwei uint64 `protobuf:"varint,9,opt,name=effective_balance_gwei,json=effectiveBalanceGwei,proto3" json:"effective_balance_gwei,omitempty"`
 	// Actual (running) balance in Gwei at epoch entry, after all rewards and
 	// penalties from the prior epoch have been applied.
 	// In daily-rollup mode: value at end_epoch (closing position for the day).
-	BalanceGwei   int64 `protobuf:"varint,10,opt,name=balance_gwei,json=balanceGwei,proto3" json:"balance_gwei,omitempty"`
+	BalanceGwei   uint64 `protobuf:"varint,10,opt,name=balance_gwei,json=balanceGwei,proto3" json:"balance_gwei,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -328,29 +319,30 @@ func (x *RewardEntry) GetValidatorIndex() int64 {
 	return 0
 }
 
-func (x *RewardEntry) GetEffectiveBalanceGwei() int64 {
+func (x *RewardEntry) GetEffectiveBalanceGwei() uint64 {
 	if x != nil {
 		return x.EffectiveBalanceGwei
 	}
 	return 0
 }
 
-func (x *RewardEntry) GetBalanceGwei() int64 {
+func (x *RewardEntry) GetBalanceGwei() uint64 {
 	if x != nil {
 		return x.BalanceGwei
 	}
 	return 0
 }
 
-// RewardBreakdown is a single reward type's amount and denomination.
+// RewardBreakdown contains the exact signed reward amount and its floored Gwei value.
+// Negative amount_gwei values preserve consensus penalties; conversion uses mathematical floor.
 type RewardBreakdown struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Reward amount string (formatted for the requested denomination).
-	Amount string `protobuf:"bytes,1,opt,name=amount,proto3" json:"amount,omitempty"`
-	// Denomination: "ETH" or "wei".
-	Denomination string `protobuf:"bytes,2,opt,name=denomination,proto3" json:"denomination,omitempty"`
 	// Reward type: "consensus", "fees", or "mev".
-	Type          string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	// Exact signed integer reward in Wei.
+	AmountWei string `protobuf:"bytes,4,opt,name=amount_wei,json=amountWei,proto3" json:"amount_wei,omitempty"`
+	// Reward in Gwei, floored mathematically; negative penalties remain negative.
+	AmountGwei    int64 `protobuf:"varint,5,opt,name=amount_gwei,json=amountGwei,proto3" json:"amount_gwei,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -385,20 +377,6 @@ func (*RewardBreakdown) Descriptor() ([]byte, []int) {
 	return file_public_ethereum_v1_rewards_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *RewardBreakdown) GetAmount() string {
-	if x != nil {
-		return x.Amount
-	}
-	return ""
-}
-
-func (x *RewardBreakdown) GetDenomination() string {
-	if x != nil {
-		return x.Denomination
-	}
-	return ""
-}
-
 func (x *RewardBreakdown) GetType() string {
 	if x != nil {
 		return x.Type
@@ -406,13 +384,27 @@ func (x *RewardBreakdown) GetType() string {
 	return ""
 }
 
-// RewardAmount is a total reward value with its denomination.
+func (x *RewardBreakdown) GetAmountWei() string {
+	if x != nil {
+		return x.AmountWei
+	}
+	return ""
+}
+
+func (x *RewardBreakdown) GetAmountGwei() int64 {
+	if x != nil {
+		return x.AmountGwei
+	}
+	return 0
+}
+
+// RewardAmount contains the exact signed reward total and its floored Gwei value.
 type RewardAmount struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Total reward amount string.
-	Amount string `protobuf:"bytes,1,opt,name=amount,proto3" json:"amount,omitempty"`
-	// Denomination: "ETH" or "wei".
-	Denomination  string `protobuf:"bytes,2,opt,name=denomination,proto3" json:"denomination,omitempty"`
+	// Exact signed integer reward in Wei.
+	AmountWei string `protobuf:"bytes,3,opt,name=amount_wei,json=amountWei,proto3" json:"amount_wei,omitempty"`
+	// Reward in Gwei, floored mathematically.
+	AmountGwei    int64 `protobuf:"varint,4,opt,name=amount_gwei,json=amountGwei,proto3" json:"amount_gwei,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -447,25 +439,25 @@ func (*RewardAmount) Descriptor() ([]byte, []int) {
 	return file_public_ethereum_v1_rewards_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *RewardAmount) GetAmount() string {
+func (x *RewardAmount) GetAmountWei() string {
 	if x != nil {
-		return x.Amount
+		return x.AmountWei
 	}
 	return ""
 }
 
-func (x *RewardAmount) GetDenomination() string {
+func (x *RewardAmount) GetAmountGwei() int64 {
 	if x != nil {
-		return x.Denomination
+		return x.AmountGwei
 	}
-	return ""
+	return 0
 }
 
 var File_public_ethereum_v1_rewards_proto protoreflect.FileDescriptor
 
 const file_public_ethereum_v1_rewards_proto_rawDesc = "" +
 	"\n" +
-	" public/ethereum/v1/rewards.proto\x12\x12public.ethereum.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\x8b\x05\n" +
+	" public/ethereum/v1/rewards.proto\x12\x12public.ethereum.v1\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\xef\x04\n" +
 	"\x11GetRewardsRequest\x12\x18\n" +
 	"\apubkeys\x18\x01 \x03(\tR\apubkeys\x120\n" +
 	"\n" +
@@ -473,15 +465,13 @@ const file_public_ethereum_v1_rewards_proto_rawDesc = "" +
 	"\bend_date\x18\x04 \x01(\tB\x11\x92A\x0eJ\f\"2026-01-31\"R\aendDate\x12,\n" +
 	"\vstart_epoch\x18\x05 \x01(\x03B\v\x92A\bJ\x06300000R\n" +
 	"startEpoch\x12(\n" +
-	"\tend_epoch\x18\x06 \x01(\x03B\v\x92A\bJ\x06301000R\bendEpoch\x12.\n" +
-	"\fdenomination\x18\a \x01(\tB\n" +
-	"\x92A\aJ\x05\"ETH\"R\fdenomination\x12%\n" +
+	"\tend_epoch\x18\x06 \x01(\x03B\v\x92A\bJ\x06301000R\bendEpoch\x12%\n" +
 	"\tpage_size\x18b \x01(\x05B\b\x92A\x05J\x03100R\bpageSize\x12\x1f\n" +
 	"\vnext_cursor\x18c \x01(\tR\n" +
 	"nextCursor:\x9a\x02\x92A\x96\x02\n" +
 	"\x93\x02*\x11GetRewardsRequest2\xfd\x01Request to retrieve validator reward data.\n" +
 	"\n" +
-	"`pubkeys` is **required** (1-100 entries). Rewards are returned only for the specified validators. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.J\x04\b\x02\x10\x03R\toperators\"\xa4\x02\n" +
+	"`pubkeys` is **required** (1-100 entries). Rewards are returned only for the specified validators. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.J\x04\b\x02\x10\x03J\x04\b\a\x10\bR\toperatorsR\fdenomination\"\xa4\x02\n" +
 	"\x12GetRewardsResponse\x129\n" +
 	"\arewards\x18\x01 \x03(\v2\x1f.public.ethereum.v1.RewardEntryR\arewards\x12E\n" +
 	"\rtotal_rewards\x18\x02 \x01(\v2 .public.ethereum.v1.RewardAmountR\ftotalRewards\x12R\n" +
@@ -498,16 +488,20 @@ const file_public_ethereum_v1_rewards_proto_rawDesc = "" +
 	"\tend_epoch\x18\x06 \x01(\x03B\v\x92A\bJ\x06300224R\bendEpoch\x12=\n" +
 	"\arewards\x18\a \x03(\v2#.public.ethereum.v1.RewardBreakdownR\arewards\x124\n" +
 	"\x0fvalidator_index\x18\b \x01(\x03B\v\x92A\bJ\x06123456R\x0evalidatorIndex\x12F\n" +
-	"\x16effective_balance_gwei\x18\t \x01(\x03B\x10\x92A\rJ\v32000000000R\x14effectiveBalanceGwei\x123\n" +
+	"\x16effective_balance_gwei\x18\t \x01(\x04B\x10\x92A\rJ\v32000000000R\x14effectiveBalanceGwei\x123\n" +
 	"\fbalance_gwei\x18\n" +
-	" \x01(\x03B\x10\x92A\rJ\v32100000000R\vbalanceGwei\"a\n" +
-	"\x0fRewardBreakdown\x12\x16\n" +
-	"\x06amount\x18\x01 \x01(\tR\x06amount\x12\"\n" +
-	"\fdenomination\x18\x02 \x01(\tR\fdenomination\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\"J\n" +
-	"\fRewardAmount\x12\x16\n" +
-	"\x06amount\x18\x01 \x01(\tR\x06amount\x12\"\n" +
-	"\fdenomination\x18\x02 \x01(\tR\fdenominationB\xf0\x01\n" +
+	" \x01(\x04B\x10\x92A\rJ\v32100000000R\vbalanceGwei\"\x87\x01\n" +
+	"\x0fRewardBreakdown\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x1d\n" +
+	"\n" +
+	"amount_wei\x18\x04 \x01(\tR\tamountWei\x12\x1f\n" +
+	"\vamount_gwei\x18\x05 \x01(\x03R\n" +
+	"amountGweiJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\x06amountR\fdenomination\"p\n" +
+	"\fRewardAmount\x12\x1d\n" +
+	"\n" +
+	"amount_wei\x18\x03 \x01(\tR\tamountWei\x12\x1f\n" +
+	"\vamount_gwei\x18\x04 \x01(\x03R\n" +
+	"amountGweiJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\x06amountR\fdenominationB\xf0\x01\n" +
 	"\x16com.public.ethereum.v1B\fRewardsProtoP\x01Z\\github.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc/gen/public/ethereum/v1;ethereumv1\xa2\x02\x03PEX\xaa\x02\x12Public.Ethereum.V1\xca\x02\x13Public_\\Ethereum\\V1\xe2\x02\x1fPublic_\\Ethereum\\V1\\GPBMetadata\xea\x02\x14Public::Ethereum::V1b\x06proto3"
 
 var (

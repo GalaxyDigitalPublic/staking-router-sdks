@@ -44,7 +44,6 @@
                   "response": {
                     "value": {
                       "operation_type": "CONSOLIDATION",
-                      "fee_eth": "0.000000000000000001",
                       "fee_wei": "1",
                       "retrieved_at": "2025-05-29T08:00:35Z"
                     }
@@ -330,26 +329,31 @@
                     "value": {
                       "rewards": [
                         {
-                          "pubkey": "0x8a2f5c3b...",
+                          "pubkey": "0xb6c621e7c7c8c574c25b6c9345cf517e984a34e83a1d501c267a7c85fa6d188304caf8fd5738e9f3d9c0e9706533b0e8",
                           "operator": "galaxy",
-                          "timestamp": "2025-01-01T00:00:00Z",
-                          "epoch": 300000,
+                          "timestamp": "2026-01-15T00:00:00Z",
+                          "epoch": "300000",
+                          "start_epoch": "300000",
+                          "end_epoch": "300000",
                           "rewards": [
                             {
-                              "amount": "0.001",
-                              "denomination": "ETH",
-                              "type": "consensus"
+                              "type": "consensus",
+                              "amount_wei": "1000000000000001",
+                              "amount_gwei": "1000000"
                             }
-                          ]
+                          ],
+                          "validator_index": "123456",
+                          "effective_balance_gwei": "32000000000",
+                          "balance_gwei": "32100000000"
                         }
                       ],
                       "total_rewards": {
-                        "amount": "1.5",
-                        "denomination": "ETH"
+                        "amount_wei": "1500000000000000000",
+                        "amount_gwei": "1500000000"
                       },
                       "period_total_rewards": {
-                        "amount": "0.1",
-                        "denomination": "ETH"
+                        "amount_wei": "100000000000000000",
+                        "amount_gwei": "100000000"
                       },
                       "metadata": {
                         "next_cursor": "",
@@ -3527,14 +3531,9 @@
           "operation_type": {
             "$ref": "#/components/schemas/FeeOperationType"
           },
-          "fee_eth": {
-            "type": "string",
-            "description": "Fee in ETH (e.g., \"0.000000000000000001\")."
-          },
           "fee_wei": {
             "type": "string",
-            "format": "uint64",
-            "description": "Fee in wei. uint64 supports fees up to ~18 ETH (more than sufficient for gas fees)."
+            "description": "Fee in Wei as a base-10 decimal integer string."
           },
           "retrieved_at": {
             "type": "string",
@@ -3593,11 +3592,6 @@
             "format": "int64",
             "example": 301000,
             "description": "End epoch number. Use with start_epoch for per-epoch mode.\nNote: 0 is treated as \"not set\"; epoch 0 (genesis) cannot be queried."
-          },
-          "denomination": {
-            "type": "string",
-            "example": "ETH",
-            "description": "Denomination for reward amounts: \"ETH\" (default) or \"wei\"."
           },
           "page_size": {
             "type": "integer",
@@ -4102,34 +4096,36 @@
       "RewardAmount": {
         "type": "object",
         "properties": {
-          "amount": {
+          "amount_wei": {
             "type": "string",
-            "description": "Total reward amount string."
+            "description": "Exact signed integer reward in Wei."
           },
-          "denomination": {
+          "amount_gwei": {
             "type": "string",
-            "description": "Denomination: \"ETH\" or \"wei\"."
+            "format": "int64",
+            "description": "Reward in Gwei, floored mathematically."
           }
         },
-        "description": "RewardAmount is a total reward value with its denomination."
+        "description": "RewardAmount contains the exact signed reward total and its floored Gwei value."
       },
       "RewardBreakdown": {
         "type": "object",
         "properties": {
-          "amount": {
-            "type": "string",
-            "description": "Reward amount string (formatted for the requested denomination)."
-          },
-          "denomination": {
-            "type": "string",
-            "description": "Denomination: \"ETH\" or \"wei\"."
-          },
           "type": {
             "type": "string",
             "description": "Reward type: \"consensus\", \"fees\", or \"mev\"."
+          },
+          "amount_wei": {
+            "type": "string",
+            "description": "Exact signed integer reward in Wei."
+          },
+          "amount_gwei": {
+            "type": "string",
+            "format": "int64",
+            "description": "Reward in Gwei, floored mathematically; negative penalties remain negative."
           }
         },
-        "description": "RewardBreakdown is a single reward type's amount and denomination."
+        "description": "RewardBreakdown contains the exact signed reward amount and its floored Gwei value.\nNegative amount_gwei values preserve consensus penalties; conversion uses mathematical floor."
       },
       "RewardEntry": {
         "type": "object",
@@ -4182,13 +4178,13 @@
           },
           "effective_balance_gwei": {
             "type": "string",
-            "format": "int64",
+            "format": "uint64",
             "example": 32000000000,
             "description": "Effective balance in Gwei at epoch entry (the locked balance used to\ncompute attestation and sync rewards for this epoch).\nIn daily-rollup mode: value at end_epoch (closing position for the day)."
           },
           "balance_gwei": {
             "type": "string",
-            "format": "int64",
+            "format": "uint64",
             "example": 32100000000,
             "description": "Actual (running) balance in Gwei at epoch entry, after all rewards and\npenalties from the prior epoch have been applied.\nIn daily-rollup mode: value at end_epoch (closing position for the day)."
           }
@@ -4333,7 +4329,7 @@
           },
           "value": {
             "type": "string",
-            "description": "Transaction value in wei, as a decimal string.\n\nWhat it pays for differs by endpoint: for a top-up it is the deposit\namount; for withdraw and consolidate it is the EIP-7002/EIP-7251 request\nfee the precompile charges, and the withdrawal or consolidation amount is\nencoded in `data` instead. Read `fee_wei` to see the fee component\nexplicitly rather than inferring it from the endpoint."
+            "description": "Transaction value, always denominated in Wei and encoded as a base-10\ndecimal string. For top-ups it is the deposit amount; for withdraw and\nconsolidate it is the EIP-7002/EIP-7251 request fee charged by the\nprecompile, while the withdrawal or consolidation amount is encoded in\n`data`. Read `fee_wei` to see the precompile fee explicitly."
           },
           "data": {
             "type": "string",
@@ -4346,7 +4342,7 @@
           },
           "fee_wei": {
             "type": "string",
-            "description": "Protocol request fee in wei, as a decimal string, for endpoints that call\na precompile charging one: withdraw (EIP-7002) and consolidate\n(EIP-7251). It duplicates `value` on those endpoints.\n\nThis is the same *quantity* /ethereum/fees reports for the corresponding\noperation type, but read independently: this field comes from an execution\nlayer precompile read, /ethereum/fees from the node operator's fee API.\nThey are two reads of a moving value and can disagree at any instant, and\n/ethereum/fees types its fee_wei as a uint64 rather than a string \u2014 so the\ntwo fields are not interchangeable for a gRPC client.\n\nEmpty where no fee applies, such as top-ups, where `value` is the deposit\namount."
+            "description": "Protocol request fee in wei, as a decimal string, for endpoints that call\na precompile charging one: withdraw (EIP-7002) and consolidate\n(EIP-7251). It duplicates `value` on those endpoints.\n\nThis is the same quantity /ethereum/fees reports for the corresponding\noperation type, but read independently: this field comes from an execution\nlayer precompile read, /ethereum/fees from the node operator's fee API.\nThey are two reads of a moving value and can disagree at any instant.\n\nEmpty where no fee applies, such as top-ups, where `value` is the deposit\namount."
           }
         },
         "description": "UnsignedTransactionPayload contains the raw unsigned transaction fields.\nClient must add nonce and gas fees before signing.",

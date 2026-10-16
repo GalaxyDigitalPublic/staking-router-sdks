@@ -948,13 +948,11 @@ type UnsignedTransactionPayload struct {
 	From string `protobuf:"bytes,3,opt,name=from,proto3" json:"from,omitempty"`
 	// Target contract address.
 	To string `protobuf:"bytes,4,opt,name=to,proto3" json:"to,omitempty"`
-	// Transaction value in wei, as a decimal string.
-	//
-	// What it pays for differs by endpoint: for a top-up it is the deposit
-	// amount; for withdraw and consolidate it is the EIP-7002/EIP-7251 request
-	// fee the precompile charges, and the withdrawal or consolidation amount is
-	// encoded in `data` instead. Read `fee_wei` to see the fee component
-	// explicitly rather than inferring it from the endpoint.
+	// Transaction value, always denominated in Wei and encoded as a base-10
+	// decimal string. For top-ups it is the deposit amount; for withdraw and
+	// consolidate it is the EIP-7002/EIP-7251 request fee charged by the
+	// precompile, while the withdrawal or consolidation amount is encoded in
+	// `data`. Read `fee_wei` to see the precompile fee explicitly.
 	Value string `protobuf:"bytes,5,opt,name=value,proto3" json:"value,omitempty"`
 	// Encoded calldata for the contract call.
 	Data string `protobuf:"bytes,6,opt,name=data,proto3" json:"data,omitempty"`
@@ -964,12 +962,10 @@ type UnsignedTransactionPayload struct {
 	// a precompile charging one: withdraw (EIP-7002) and consolidate
 	// (EIP-7251). It duplicates `value` on those endpoints.
 	//
-	// This is the same *quantity* /ethereum/fees reports for the corresponding
+	// This is the same quantity /ethereum/fees reports for the corresponding
 	// operation type, but read independently: this field comes from an execution
 	// layer precompile read, /ethereum/fees from the node operator's fee API.
-	// They are two reads of a moving value and can disagree at any instant, and
-	// /ethereum/fees types its fee_wei as a uint64 rather than a string — so the
-	// two fields are not interchangeable for a gRPC client.
+	// They are two reads of a moving value and can disagree at any instant.
 	//
 	// Empty where no fee applies, such as top-ups, where `value` is the deposit
 	// amount.

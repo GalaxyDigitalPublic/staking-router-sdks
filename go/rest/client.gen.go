@@ -616,10 +616,7 @@ type GetFeesRequest struct {
 
 // GetFeesResponse GetFeesResponse is the response containing fee estimates.
 type GetFeesResponse struct {
-	// FeeEth Fee in ETH (e.g., "0.000000000000000001").
-	FeeEth *string `json:"fee_eth,omitempty"`
-
-	// FeeWei Fee in wei. uint64 supports fees up to ~18 ETH (more than sufficient for gas fees).
+	// FeeWei Fee in Wei as a base-10 decimal integer string.
 	FeeWei *string `json:"fee_wei,omitempty"`
 
 	// OperationType FeeOperationType identifies the EL operation category for fee estimation.
@@ -648,9 +645,6 @@ type GetOperatorResponse struct {
 //
 // `pubkeys` is **required** (1-100 entries). Rewards are returned only for the specified validators. Provide either a date range (`start_date`/`end_date`) or an epoch range (`start_epoch`/`end_epoch`), not both.
 type GetRewardsRequest struct {
-	// Denomination Denomination for reward amounts: "ETH" (default) or "wei".
-	Denomination *string `json:"denomination,omitempty"`
-
 	// EndDate End date (YYYY-MM-DD). Use with start_date for daily-rollup mode.
 	EndDate *string `json:"end_date,omitempty"`
 
@@ -680,13 +674,13 @@ type GetRewardsResponse struct {
 	// Metadata PageInfo contains pagination metadata for list responses.
 	Metadata *PageInfo `json:"metadata,omitempty"`
 
-	// PeriodTotalRewards RewardAmount is a total reward value with its denomination.
+	// PeriodTotalRewards RewardAmount contains the exact signed reward total and its floored Gwei value.
 	PeriodTotalRewards *RewardAmount `json:"period_total_rewards,omitempty"`
 
 	// Rewards Reward entries for the requested validators and time range.
 	Rewards *[]RewardEntry `json:"rewards,omitempty"`
 
-	// TotalRewards RewardAmount is a total reward value with its denomination.
+	// TotalRewards RewardAmount contains the exact signed reward total and its floored Gwei value.
 	TotalRewards *RewardAmount `json:"total_rewards,omitempty"`
 }
 
@@ -1030,22 +1024,23 @@ type RegisterWebhookResponse struct {
 	SigningSecret *string `json:"signing_secret,omitempty"`
 }
 
-// RewardAmount RewardAmount is a total reward value with its denomination.
+// RewardAmount RewardAmount contains the exact signed reward total and its floored Gwei value.
 type RewardAmount struct {
-	// Amount Total reward amount string.
-	Amount *string `json:"amount,omitempty"`
+	// AmountGwei Reward in Gwei, floored mathematically.
+	AmountGwei *string `json:"amount_gwei,omitempty"`
 
-	// Denomination Denomination: "ETH" or "wei".
-	Denomination *string `json:"denomination,omitempty"`
+	// AmountWei Exact signed integer reward in Wei.
+	AmountWei *string `json:"amount_wei,omitempty"`
 }
 
-// RewardBreakdown RewardBreakdown is a single reward type's amount and denomination.
+// RewardBreakdown RewardBreakdown contains the exact signed reward amount and its floored Gwei value.
+// Negative amount_gwei values preserve consensus penalties; conversion uses mathematical floor.
 type RewardBreakdown struct {
-	// Amount Reward amount string (formatted for the requested denomination).
-	Amount *string `json:"amount,omitempty"`
+	// AmountGwei Reward in Gwei, floored mathematically; negative penalties remain negative.
+	AmountGwei *string `json:"amount_gwei,omitempty"`
 
-	// Denomination Denomination: "ETH" or "wei".
-	Denomination *string `json:"denomination,omitempty"`
+	// AmountWei Exact signed integer reward in Wei.
+	AmountWei *string `json:"amount_wei,omitempty"`
 
 	// Type Reward type: "consensus", "fees", or "mev".
 	Type *string `json:"type,omitempty"`
@@ -1177,12 +1172,10 @@ type UnsignedTransactionPayload struct {
 	// a precompile charging one: withdraw (EIP-7002) and consolidate
 	// (EIP-7251). It duplicates `value` on those endpoints.
 	//
-	// This is the same *quantity* /ethereum/fees reports for the corresponding
+	// This is the same quantity /ethereum/fees reports for the corresponding
 	// operation type, but read independently: this field comes from an execution
 	// layer precompile read, /ethereum/fees from the node operator's fee API.
-	// They are two reads of a moving value and can disagree at any instant, and
-	// /ethereum/fees types its fee_wei as a uint64 rather than a string — so the
-	// two fields are not interchangeable for a gRPC client.
+	// They are two reads of a moving value and can disagree at any instant.
 	//
 	// Empty where no fee applies, such as top-ups, where `value` is the deposit
 	// amount.
@@ -1202,13 +1195,11 @@ type UnsignedTransactionPayload struct {
 	// Type Transaction type (always 2 for EIP-1559).
 	Type *int32 `json:"type,omitempty"`
 
-	// Value Transaction value in wei, as a decimal string.
-	//
-	// What it pays for differs by endpoint: for a top-up it is the deposit
-	// amount; for withdraw and consolidate it is the EIP-7002/EIP-7251 request
-	// fee the precompile charges, and the withdrawal or consolidation amount is
-	// encoded in `data` instead. Read `fee_wei` to see the fee component
-	// explicitly rather than inferring it from the endpoint.
+	// Value Transaction value, always denominated in Wei and encoded as a base-10
+	// decimal string. For top-ups it is the deposit amount; for withdraw and
+	// consolidate it is the EIP-7002/EIP-7251 request fee charged by the
+	// precompile, while the withdrawal or consolidation amount is encoded in
+	// `data`. Read `fee_wei` to see the precompile fee explicitly.
 	Value *string `json:"value,omitempty"`
 }
 
@@ -4796,6 +4787,101 @@ func NewStakingRouterServiceGetTransactionStatusRequest(server string, transacti
 	return req, nil
 }
 
+func addStakingRouterServiceListValidatorsQueryParams(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params == nil {
+		return nil
+	}
+	for _, addParam := range stakingRouterServiceListValidatorsQueryParamAdders {
+		if err := addParam(queryValues, params); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var stakingRouterServiceListValidatorsQueryParamAdders = [...]func(url.Values, *StakingRouterServiceListValidatorsParams) error{
+	addStakingRouterServiceListValidatorsQueryParam0,
+	addStakingRouterServiceListValidatorsQueryParam1,
+	addStakingRouterServiceListValidatorsQueryParam2,
+	addStakingRouterServiceListValidatorsQueryParam3,
+	addStakingRouterServiceListValidatorsQueryParam4,
+	addStakingRouterServiceListValidatorsQueryParam5,
+	addStakingRouterServiceListValidatorsQueryParam6,
+	addStakingRouterServiceListValidatorsQueryParam7,
+}
+
+func addStakingRouterServiceListValidatorsQueryParam0(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.Status == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "status", *params.Status)
+
+}
+
+func addStakingRouterServiceListValidatorsQueryParam1(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.Operator == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "operator", *params.Operator)
+
+}
+
+func addStakingRouterServiceListValidatorsQueryParam2(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.WithdrawalAddress == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "withdrawal_address", *params.WithdrawalAddress)
+
+}
+
+func addStakingRouterServiceListValidatorsQueryParam3(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.OperationId == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "operation_id", *params.OperationId)
+
+}
+
+func addStakingRouterServiceListValidatorsQueryParam4(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.IncludePresignedExit == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "include_presigned_exit", *params.IncludePresignedExit)
+
+}
+
+func addStakingRouterServiceListValidatorsQueryParam5(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.Pubkeys == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "pubkeys", *params.Pubkeys)
+
+}
+
+func addStakingRouterServiceListValidatorsQueryParam6(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.PageSize == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "page_size", *params.PageSize)
+
+}
+
+func addStakingRouterServiceListValidatorsQueryParam7(queryValues url.Values, params *StakingRouterServiceListValidatorsParams) error {
+	if params.NextCursor == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "next_cursor", *params.NextCursor)
+
+}
+
 // NewStakingRouterServiceListValidatorsRequest generates requests for StakingRouterServiceListValidators
 func NewStakingRouterServiceListValidatorsRequest(server string, params *StakingRouterServiceListValidatorsParams) (*http.Request, error) {
 	var err error
@@ -4817,135 +4903,9 @@ func NewStakingRouterServiceListValidatorsRequest(server string, params *Staking
 
 	if params != nil {
 		queryValues := queryURL.Query()
-
-		if params.Status != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
+		if err := addStakingRouterServiceListValidatorsQueryParams(queryValues, params); err != nil {
+			return nil, err
 		}
-
-		if params.Operator != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "operator", runtime.ParamLocationQuery, *params.Operator); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.WithdrawalAddress != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "withdrawal_address", runtime.ParamLocationQuery, *params.WithdrawalAddress); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.OperationId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "operation_id", runtime.ParamLocationQuery, *params.OperationId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.IncludePresignedExit != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "include_presigned_exit", runtime.ParamLocationQuery, *params.IncludePresignedExit); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Pubkeys != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pubkeys", runtime.ParamLocationQuery, *params.Pubkeys); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.PageSize != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page_size", runtime.ParamLocationQuery, *params.PageSize); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.NextCursor != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "next_cursor", runtime.ParamLocationQuery, *params.NextCursor); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
@@ -5197,6 +5157,41 @@ func NewStakingRouterServiceProvisionRequestWithBody(server string, contentType 
 	return req, nil
 }
 
+func addStakingRouterServiceGetValidatorsSummaryQueryParams(queryValues url.Values, params *StakingRouterServiceGetValidatorsSummaryParams) error {
+	if params == nil {
+		return nil
+	}
+	for _, addParam := range stakingRouterServiceGetValidatorsSummaryQueryParamAdders {
+		if err := addParam(queryValues, params); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var stakingRouterServiceGetValidatorsSummaryQueryParamAdders = [...]func(url.Values, *StakingRouterServiceGetValidatorsSummaryParams) error{
+	addStakingRouterServiceGetValidatorsSummaryQueryParam0,
+	addStakingRouterServiceGetValidatorsSummaryQueryParam1,
+}
+
+func addStakingRouterServiceGetValidatorsSummaryQueryParam0(queryValues url.Values, params *StakingRouterServiceGetValidatorsSummaryParams) error {
+	if params.WithdrawalAddress == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "withdrawal_address", *params.WithdrawalAddress)
+
+}
+
+func addStakingRouterServiceGetValidatorsSummaryQueryParam1(queryValues url.Values, params *StakingRouterServiceGetValidatorsSummaryParams) error {
+	if params.Operator == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "operator", *params.Operator)
+
+}
+
 // NewStakingRouterServiceGetValidatorsSummaryRequest generates requests for StakingRouterServiceGetValidatorsSummary
 func NewStakingRouterServiceGetValidatorsSummaryRequest(server string, params *StakingRouterServiceGetValidatorsSummaryParams) (*http.Request, error) {
 	var err error
@@ -5218,39 +5213,9 @@ func NewStakingRouterServiceGetValidatorsSummaryRequest(server string, params *S
 
 	if params != nil {
 		queryValues := queryURL.Query()
-
-		if params.WithdrawalAddress != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "withdrawal_address", runtime.ParamLocationQuery, *params.WithdrawalAddress); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
+		if err := addStakingRouterServiceGetValidatorsSummaryQueryParams(queryValues, params); err != nil {
+			return nil, err
 		}
-
-		if params.Operator != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "operator", runtime.ParamLocationQuery, *params.Operator); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
@@ -5376,6 +5341,31 @@ func NewSolanaStakingRouterServiceListSolanaStakeAccountsRequestWithBody(server 
 	return req, nil
 }
 
+func addSolanaStakingRouterServiceGetSolanaStakeAccountQueryParams(queryValues url.Values, params *SolanaStakingRouterServiceGetSolanaStakeAccountParams) error {
+	if params == nil {
+		return nil
+	}
+	for _, addParam := range solanaStakingRouterServiceGetSolanaStakeAccountQueryParamAdders {
+		if err := addParam(queryValues, params); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var solanaStakingRouterServiceGetSolanaStakeAccountQueryParamAdders = [...]func(url.Values, *SolanaStakingRouterServiceGetSolanaStakeAccountParams) error{
+	addSolanaStakingRouterServiceGetSolanaStakeAccountQueryParam0,
+}
+
+func addSolanaStakingRouterServiceGetSolanaStakeAccountQueryParam0(queryValues url.Values, params *SolanaStakingRouterServiceGetSolanaStakeAccountParams) error {
+	if params.Operator == nil {
+		return nil
+	}
+
+	return appendStyledQueryParam(queryValues, "form", true, "operator", *params.Operator)
+
+}
+
 // NewSolanaStakingRouterServiceGetSolanaStakeAccountRequest generates requests for SolanaStakingRouterServiceGetSolanaStakeAccount
 func NewSolanaStakingRouterServiceGetSolanaStakeAccountRequest(server string, stakeAccount string, params *SolanaStakingRouterServiceGetSolanaStakeAccountParams) (*http.Request, error) {
 	var err error
@@ -5404,23 +5394,9 @@ func NewSolanaStakingRouterServiceGetSolanaStakeAccountRequest(server string, st
 
 	if params != nil {
 		queryValues := queryURL.Query()
-
-		if params.Operator != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "operator", runtime.ParamLocationQuery, *params.Operator); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
+		if err := addSolanaStakingRouterServiceGetSolanaStakeAccountQueryParams(queryValues, params); err != nil {
+			return nil, err
 		}
-
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
@@ -6085,6 +6061,44 @@ func NewWebhookServiceDeleteWebhookRequest(server string, id string) (*http.Requ
 	}
 
 	return req, nil
+}
+
+func appendJSONQueryParam(queryValues url.Values, paramName string, value any) error {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	queryValues.Add(paramName, string(encoded))
+	return nil
+}
+
+func appendStyledQueryParam(
+	queryValues url.Values,
+	style string,
+	explode bool,
+	paramName string,
+	value any,
+) error {
+	queryFragment, err := runtime.StyleParamWithLocation(
+		style,
+		explode,
+		paramName,
+		runtime.ParamLocationQuery,
+		value,
+	)
+	if err != nil {
+		return err
+	}
+	parsed, err := url.ParseQuery(queryFragment)
+	if err != nil {
+		return err
+	}
+	for key, values := range parsed {
+		for _, value := range values {
+			queryValues.Add(key, value)
+		}
+	}
+	return nil
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
@@ -7813,6 +7827,22 @@ func (c *ClientWithResponses) WebhookServiceDeleteWebhookWithResponse(ctx contex
 	return ParseWebhookServiceDeleteWebhookResponse(rsp)
 }
 
+func responseContentTypeMatches(header, expected string) bool {
+	if strings.Contains(expected, "json") {
+		return strings.Contains(header, "json")
+	}
+	return strings.Contains(header, expected)
+}
+
+func parseStakingRouterServiceGetFeesResponseJSON200(response *StakingRouterServiceGetFeesResponse, bodyBytes []byte) (*StakingRouterServiceGetFeesResponse, error) {
+	var dest GetFeesResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
 // ParseStakingRouterServiceGetFeesResponse parses an HTTP response from a StakingRouterServiceGetFeesWithResponse call
 func ParseStakingRouterServiceGetFeesResponse(rsp *http.Response) (*StakingRouterServiceGetFeesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7825,17 +7855,21 @@ func ParseStakingRouterServiceGetFeesResponse(rsp *http.Response) (*StakingRoute
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetFeesResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetFeesResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceListOperationsResponseJSON200(response *StakingRouterServiceListOperationsResponse, bodyBytes []byte) (*StakingRouterServiceListOperationsResponse, error) {
+	var dest ListOperationsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -7851,17 +7885,30 @@ func ParseStakingRouterServiceListOperationsResponse(rsp *http.Response) (*Staki
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListOperationsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceListOperationsResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetOperationResponseJSON200(response *StakingRouterServiceGetOperationResponse, bodyBytes []byte) (*StakingRouterServiceGetOperationResponse, error) {
+	var dest GetOperationResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceGetOperationResponseJSON404(response *StakingRouterServiceGetOperationResponse, bodyBytes []byte) (*StakingRouterServiceGetOperationResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON404 = &dest
 	return response, nil
 }
 
@@ -7877,24 +7924,24 @@ func ParseStakingRouterServiceGetOperationResponse(rsp *http.Response) (*Staking
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetOperationResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetOperationResponseJSON200(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 404:
+		return parseStakingRouterServiceGetOperationResponseJSON404(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceListOperatorsResponseJSON200(response *StakingRouterServiceListOperatorsResponse, bodyBytes []byte) (*StakingRouterServiceListOperatorsResponse, error) {
+	var dest ListOperatorsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -7910,17 +7957,30 @@ func ParseStakingRouterServiceListOperatorsResponse(rsp *http.Response) (*Stakin
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListOperatorsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceListOperatorsResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetOperatorResponseJSON200(response *StakingRouterServiceGetOperatorResponse, bodyBytes []byte) (*StakingRouterServiceGetOperatorResponse, error) {
+	var dest GetOperatorResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceGetOperatorResponseJSON404(response *StakingRouterServiceGetOperatorResponse, bodyBytes []byte) (*StakingRouterServiceGetOperatorResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON404 = &dest
 	return response, nil
 }
 
@@ -7936,24 +7996,51 @@ func ParseStakingRouterServiceGetOperatorResponse(rsp *http.Response) (*StakingR
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetOperatorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetOperatorResponseJSON200(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 404:
+		return parseStakingRouterServiceGetOperatorResponseJSON404(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetRewardsResponseJSON200(response *StakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*StakingRouterServiceGetRewardsResponse, error) {
+	var dest GetRewardsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceGetRewardsResponseJSON400(response *StakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*StakingRouterServiceGetRewardsResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceGetRewardsResponseJSON501(response *StakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*StakingRouterServiceGetRewardsResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON501 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceGetRewardsResponseJSON503(response *StakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*StakingRouterServiceGetRewardsResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON503 = &dest
 	return response, nil
 }
 
@@ -7969,38 +8056,30 @@ func ParseStakingRouterServiceGetRewardsResponse(rsp *http.Response) (*StakingRo
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetRewardsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetRewardsResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON501 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseStakingRouterServiceGetRewardsResponseJSON400(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON503 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 501:
+		return parseStakingRouterServiceGetRewardsResponseJSON501(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 503:
+		return parseStakingRouterServiceGetRewardsResponseJSON503(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceBroadcastTransactionResponseJSON200(response *StakingRouterServiceBroadcastTransactionResponse, bodyBytes []byte) (*StakingRouterServiceBroadcastTransactionResponse, error) {
+	var dest BroadcastTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8016,17 +8095,48 @@ func ParseStakingRouterServiceBroadcastTransactionResponse(rsp *http.Response) (
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BroadcastTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceBroadcastTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceCreateConsolidateTransactionResponseJSON200(response *StakingRouterServiceCreateConsolidateTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateConsolidateTransactionResponse, error) {
+	var dest CreateConsolidateTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceCreateConsolidateTransactionResponseJSON404(response *StakingRouterServiceCreateConsolidateTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateConsolidateTransactionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON404 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceCreateConsolidateTransactionResponseJSON409(response *StakingRouterServiceCreateConsolidateTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateConsolidateTransactionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON409 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceCreateConsolidateTransactionResponseJSON503(response *StakingRouterServiceCreateConsolidateTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateConsolidateTransactionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON503 = &dest
 	return response, nil
 }
 
@@ -8042,38 +8152,39 @@ func ParseStakingRouterServiceCreateConsolidateTransactionResponse(rsp *http.Res
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest CreateConsolidateTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceCreateConsolidateTransactionResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 404:
+		return parseStakingRouterServiceCreateConsolidateTransactionResponseJSON404(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON503 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 409:
+		return parseStakingRouterServiceCreateConsolidateTransactionResponseJSON409(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 503:
+		return parseStakingRouterServiceCreateConsolidateTransactionResponseJSON503(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceCreateTopupTransactionResponseJSON200(response *StakingRouterServiceCreateTopupTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateTopupTransactionResponse, error) {
+	var dest CreateTopupTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceCreateTopupTransactionResponseJSON400(response *StakingRouterServiceCreateTopupTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateTopupTransactionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
 	return response, nil
 }
 
@@ -8089,24 +8200,51 @@ func ParseStakingRouterServiceCreateTopupTransactionResponse(rsp *http.Response)
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest CreateTopupTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceCreateTopupTransactionResponseJSON200(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseStakingRouterServiceCreateTopupTransactionResponseJSON400(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceCreateWithdrawTransactionResponseJSON200(response *StakingRouterServiceCreateWithdrawTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateWithdrawTransactionResponse, error) {
+	var dest CreateWithdrawTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceCreateWithdrawTransactionResponseJSON400(response *StakingRouterServiceCreateWithdrawTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateWithdrawTransactionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceCreateWithdrawTransactionResponseJSON404(response *StakingRouterServiceCreateWithdrawTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateWithdrawTransactionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON404 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceCreateWithdrawTransactionResponseJSON409(response *StakingRouterServiceCreateWithdrawTransactionResponse, bodyBytes []byte) (*StakingRouterServiceCreateWithdrawTransactionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON409 = &dest
 	return response, nil
 }
 
@@ -8122,38 +8260,39 @@ func ParseStakingRouterServiceCreateWithdrawTransactionResponse(rsp *http.Respon
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest CreateWithdrawTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceCreateWithdrawTransactionResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseStakingRouterServiceCreateWithdrawTransactionResponseJSON400(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 404:
+		return parseStakingRouterServiceCreateWithdrawTransactionResponseJSON404(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 409:
+		return parseStakingRouterServiceCreateWithdrawTransactionResponseJSON409(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetTransactionStatusResponseJSON200(response *StakingRouterServiceGetTransactionStatusResponse, bodyBytes []byte) (*StakingRouterServiceGetTransactionStatusResponse, error) {
+	var dest GetTransactionStatusResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceGetTransactionStatusResponseJSON404(response *StakingRouterServiceGetTransactionStatusResponse, bodyBytes []byte) (*StakingRouterServiceGetTransactionStatusResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON404 = &dest
 	return response, nil
 }
 
@@ -8169,24 +8308,33 @@ func ParseStakingRouterServiceGetTransactionStatusResponse(rsp *http.Response) (
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetTransactionStatusResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetTransactionStatusResponseJSON200(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 404:
+		return parseStakingRouterServiceGetTransactionStatusResponseJSON404(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceListValidatorsResponseJSON200(response *StakingRouterServiceListValidatorsResponse, bodyBytes []byte) (*StakingRouterServiceListValidatorsResponse, error) {
+	var dest ListValidatorsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceListValidatorsResponseJSON400(response *StakingRouterServiceListValidatorsResponse, bodyBytes []byte) (*StakingRouterServiceListValidatorsResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
 	return response, nil
 }
 
@@ -8202,24 +8350,24 @@ func ParseStakingRouterServiceListValidatorsResponse(rsp *http.Response) (*Staki
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListValidatorsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceListValidatorsResponseJSON200(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseStakingRouterServiceListValidatorsResponseJSON400(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetDepositArtifactsResponseJSON200(response *StakingRouterServiceGetDepositArtifactsResponse, bodyBytes []byte) (*StakingRouterServiceGetDepositArtifactsResponse, error) {
+	var dest GetDepositArtifactsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8235,17 +8383,21 @@ func ParseStakingRouterServiceGetDepositArtifactsResponse(rsp *http.Response) (*
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetDepositArtifactsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetDepositArtifactsResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetExitArtifactsResponseJSON200(response *StakingRouterServiceGetExitArtifactsResponse, bodyBytes []byte) (*StakingRouterServiceGetExitArtifactsResponse, error) {
+	var dest GetExitArtifactsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8261,17 +8413,57 @@ func ParseStakingRouterServiceGetExitArtifactsResponse(rsp *http.Response) (*Sta
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetExitArtifactsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetExitArtifactsResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceExitResponseJSON200(response *StakingRouterServiceExitResponse, bodyBytes []byte) (*StakingRouterServiceExitResponse, error) {
+	var dest ExitResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceExitResponseJSON202(response *StakingRouterServiceExitResponse, bodyBytes []byte) (*StakingRouterServiceExitResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON202 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceExitResponseJSON400(response *StakingRouterServiceExitResponse, bodyBytes []byte) (*StakingRouterServiceExitResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceExitResponseJSON404(response *StakingRouterServiceExitResponse, bodyBytes []byte) (*StakingRouterServiceExitResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON404 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceExitResponseJSON409(response *StakingRouterServiceExitResponse, bodyBytes []byte) (*StakingRouterServiceExitResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON409 = &dest
 	return response, nil
 }
 
@@ -8287,45 +8479,51 @@ func ParseStakingRouterServiceExitResponse(rsp *http.Response) (*StakingRouterSe
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExitResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON202 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceExitResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 202:
+		return parseStakingRouterServiceExitResponseJSON202(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseStakingRouterServiceExitResponseJSON400(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 404:
+		return parseStakingRouterServiceExitResponseJSON404(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 409:
+		return parseStakingRouterServiceExitResponseJSON409(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceExitPreSignedResponseJSON200(response *StakingRouterServiceExitPreSignedResponse, bodyBytes []byte) (*StakingRouterServiceExitPreSignedResponse, error) {
+	var dest ExitPreSignedResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceExitPreSignedResponseJSON202(response *StakingRouterServiceExitPreSignedResponse, bodyBytes []byte) (*StakingRouterServiceExitPreSignedResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON202 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceExitPreSignedResponseJSON409(response *StakingRouterServiceExitPreSignedResponse, bodyBytes []byte) (*StakingRouterServiceExitPreSignedResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON409 = &dest
 	return response, nil
 }
 
@@ -8341,31 +8539,54 @@ func ParseStakingRouterServiceExitPreSignedResponse(rsp *http.Response) (*Stakin
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExitPreSignedResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON202 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceExitPreSignedResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 202:
+		return parseStakingRouterServiceExitPreSignedResponseJSON202(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 409:
+		return parseStakingRouterServiceExitPreSignedResponseJSON409(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceUpdateFeeRecipientResponseJSON200(response *StakingRouterServiceUpdateFeeRecipientResponse, bodyBytes []byte) (*StakingRouterServiceUpdateFeeRecipientResponse, error) {
+	var dest UpdateFeeRecipientResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceUpdateFeeRecipientResponseJSON202(response *StakingRouterServiceUpdateFeeRecipientResponse, bodyBytes []byte) (*StakingRouterServiceUpdateFeeRecipientResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON202 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceUpdateFeeRecipientResponseJSON409(response *StakingRouterServiceUpdateFeeRecipientResponse, bodyBytes []byte) (*StakingRouterServiceUpdateFeeRecipientResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON409 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceUpdateFeeRecipientResponseJSON501(response *StakingRouterServiceUpdateFeeRecipientResponse, bodyBytes []byte) (*StakingRouterServiceUpdateFeeRecipientResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON501 = &dest
 	return response, nil
 }
 
@@ -8381,38 +8602,66 @@ func ParseStakingRouterServiceUpdateFeeRecipientResponse(rsp *http.Response) (*S
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest UpdateFeeRecipientResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON202 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceUpdateFeeRecipientResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 202:
+		return parseStakingRouterServiceUpdateFeeRecipientResponseJSON202(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON501 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 409:
+		return parseStakingRouterServiceUpdateFeeRecipientResponseJSON409(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 501:
+		return parseStakingRouterServiceUpdateFeeRecipientResponseJSON501(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceProvisionResponseJSON200(response *StakingRouterServiceProvisionResponse, bodyBytes []byte) (*StakingRouterServiceProvisionResponse, error) {
+	var dest ProvisionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceProvisionResponseJSON202(response *StakingRouterServiceProvisionResponse, bodyBytes []byte) (*StakingRouterServiceProvisionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON202 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceProvisionResponseJSON400(response *StakingRouterServiceProvisionResponse, bodyBytes []byte) (*StakingRouterServiceProvisionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceProvisionResponseJSON409(response *StakingRouterServiceProvisionResponse, bodyBytes []byte) (*StakingRouterServiceProvisionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON409 = &dest
+	return response, nil
+}
+
+func parseStakingRouterServiceProvisionResponseJSON502(response *StakingRouterServiceProvisionResponse, bodyBytes []byte) (*StakingRouterServiceProvisionResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON502 = &dest
 	return response, nil
 }
 
@@ -8428,45 +8677,33 @@ func ParseStakingRouterServiceProvisionResponse(rsp *http.Response) (*StakingRou
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ProvisionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON202 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceProvisionResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 202:
+		return parseStakingRouterServiceProvisionResponseJSON202(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseStakingRouterServiceProvisionResponseJSON400(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON502 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 409:
+		return parseStakingRouterServiceProvisionResponseJSON409(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 502:
+		return parseStakingRouterServiceProvisionResponseJSON502(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetValidatorsSummaryResponseJSON200(response *StakingRouterServiceGetValidatorsSummaryResponse, bodyBytes []byte) (*StakingRouterServiceGetValidatorsSummaryResponse, error) {
+	var dest GetValidatorsSummaryResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8482,17 +8719,21 @@ func ParseStakingRouterServiceGetValidatorsSummaryResponse(rsp *http.Response) (
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetValidatorsSummaryResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetValidatorsSummaryResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceGetValidatorResponseJSON200(response *StakingRouterServiceGetValidatorResponse, bodyBytes []byte) (*StakingRouterServiceGetValidatorResponse, error) {
+	var dest GetValidatorResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8508,17 +8749,21 @@ func ParseStakingRouterServiceGetValidatorResponse(rsp *http.Response) (*Staking
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetValidatorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceGetValidatorResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseStakingRouterServiceListWithdrawalsResponseJSON200(response *StakingRouterServiceListWithdrawalsResponse, bodyBytes []byte) (*StakingRouterServiceListWithdrawalsResponse, error) {
+	var dest ListWithdrawalsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8534,17 +8779,21 @@ func ParseStakingRouterServiceListWithdrawalsResponse(rsp *http.Response) (*Stak
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListWithdrawalsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseStakingRouterServiceListWithdrawalsResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceListSolanaStakeAccountsResponseJSON200(response *SolanaStakingRouterServiceListSolanaStakeAccountsResponse, bodyBytes []byte) (*SolanaStakingRouterServiceListSolanaStakeAccountsResponse, error) {
+	var dest PublicSolanaV1ListSolanaStakeAccountsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8560,17 +8809,21 @@ func ParseSolanaStakingRouterServiceListSolanaStakeAccountsResponse(rsp *http.Re
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1ListSolanaStakeAccountsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceListSolanaStakeAccountsResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceGetSolanaStakeAccountResponseJSON200(response *SolanaStakingRouterServiceGetSolanaStakeAccountResponse, bodyBytes []byte) (*SolanaStakingRouterServiceGetSolanaStakeAccountResponse, error) {
+	var dest PublicSolanaV1GetSolanaStakeAccountResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8586,17 +8839,21 @@ func ParseSolanaStakingRouterServiceGetSolanaStakeAccountResponse(rsp *http.Resp
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1GetSolanaStakeAccountResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceGetSolanaStakeAccountResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceRegisterAddressesResponseJSON200(response *SolanaStakingRouterServiceRegisterAddressesResponse, bodyBytes []byte) (*SolanaStakingRouterServiceRegisterAddressesResponse, error) {
+	var dest PublicSolanaV1RegisterAddressesResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8612,17 +8869,48 @@ func ParseSolanaStakingRouterServiceRegisterAddressesResponse(rsp *http.Response
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1RegisterAddressesResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceRegisterAddressesResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceGetRewardsResponseJSON200(response *SolanaStakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*SolanaStakingRouterServiceGetRewardsResponse, error) {
+	var dest PublicSolanaV1GetRewardsResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseSolanaStakingRouterServiceGetRewardsResponseJSON400(response *SolanaStakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*SolanaStakingRouterServiceGetRewardsResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
+	return response, nil
+}
+
+func parseSolanaStakingRouterServiceGetRewardsResponseJSON501(response *SolanaStakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*SolanaStakingRouterServiceGetRewardsResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON501 = &dest
+	return response, nil
+}
+
+func parseSolanaStakingRouterServiceGetRewardsResponseJSON503(response *SolanaStakingRouterServiceGetRewardsResponse, bodyBytes []byte) (*SolanaStakingRouterServiceGetRewardsResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON503 = &dest
 	return response, nil
 }
 
@@ -8638,38 +8926,30 @@ func ParseSolanaStakingRouterServiceGetRewardsResponse(rsp *http.Response) (*Sol
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1GetRewardsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceGetRewardsResponseJSON200(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON501 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseSolanaStakingRouterServiceGetRewardsResponseJSON400(response, bodyBytes)
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON503 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 501:
+		return parseSolanaStakingRouterServiceGetRewardsResponseJSON501(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 503:
+		return parseSolanaStakingRouterServiceGetRewardsResponseJSON503(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceBroadcastTransactionResponseJSON200(response *SolanaStakingRouterServiceBroadcastTransactionResponse, bodyBytes []byte) (*SolanaStakingRouterServiceBroadcastTransactionResponse, error) {
+	var dest PublicSolanaV1BroadcastTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8685,17 +8965,21 @@ func ParseSolanaStakingRouterServiceBroadcastTransactionResponse(rsp *http.Respo
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1BroadcastTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceBroadcastTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateDelegateTransactionResponseJSON200(response *SolanaStakingRouterServiceCreateDelegateTransactionResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateDelegateTransactionResponse, error) {
+	var dest PublicSolanaV1CreateDelegateTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8711,17 +8995,21 @@ func ParseSolanaStakingRouterServiceCreateDelegateTransactionResponse(rsp *http.
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateDelegateTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateDelegateTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateMergeTransactionResponseJSON200(response *SolanaStakingRouterServiceCreateMergeTransactionResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateMergeTransactionResponse, error) {
+	var dest PublicSolanaV1CreateMergeTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8737,17 +9025,21 @@ func ParseSolanaStakingRouterServiceCreateMergeTransactionResponse(rsp *http.Res
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateMergeTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateMergeTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceAdvanceNonceResponseJSON200(response *SolanaStakingRouterServiceAdvanceNonceResponse, bodyBytes []byte) (*SolanaStakingRouterServiceAdvanceNonceResponse, error) {
+	var dest PublicSolanaV1AdvanceNonceResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8763,17 +9055,21 @@ func ParseSolanaStakingRouterServiceAdvanceNonceResponse(rsp *http.Response) (*S
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1AdvanceNonceResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceAdvanceNonceResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateNonceAccountResponseJSON200(response *SolanaStakingRouterServiceCreateNonceAccountResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateNonceAccountResponse, error) {
+	var dest PublicSolanaV1CreateNonceAccountResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8789,17 +9085,21 @@ func ParseSolanaStakingRouterServiceCreateNonceAccountResponse(rsp *http.Respons
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateNonceAccountResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateNonceAccountResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceWithdrawNonceResponseJSON200(response *SolanaStakingRouterServiceWithdrawNonceResponse, bodyBytes []byte) (*SolanaStakingRouterServiceWithdrawNonceResponse, error) {
+	var dest PublicSolanaV1WithdrawNonceResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8815,17 +9115,21 @@ func ParseSolanaStakingRouterServiceWithdrawNonceResponse(rsp *http.Response) (*
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1WithdrawNonceResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceWithdrawNonceResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateSplitTransactionResponseJSON200(response *SolanaStakingRouterServiceCreateSplitTransactionResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateSplitTransactionResponse, error) {
+	var dest PublicSolanaV1CreateSplitTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8841,17 +9145,21 @@ func ParseSolanaStakingRouterServiceCreateSplitTransactionResponse(rsp *http.Res
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateSplitTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateSplitTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateStakeAccountResponseJSON200(response *SolanaStakingRouterServiceCreateStakeAccountResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateStakeAccountResponse, error) {
+	var dest PublicSolanaV1CreateStakeAccountResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8867,17 +9175,21 @@ func ParseSolanaStakingRouterServiceCreateStakeAccountResponse(rsp *http.Respons
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateStakeAccountResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateStakeAccountResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateTransferTransactionResponseJSON200(response *SolanaStakingRouterServiceCreateTransferTransactionResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateTransferTransactionResponse, error) {
+	var dest PublicSolanaV1CreateTransferTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8893,17 +9205,21 @@ func ParseSolanaStakingRouterServiceCreateTransferTransactionResponse(rsp *http.
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateTransferTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateTransferTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateUndelegateTransactionResponseJSON200(response *SolanaStakingRouterServiceCreateUndelegateTransactionResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateUndelegateTransactionResponse, error) {
+	var dest PublicSolanaV1CreateUndelegateTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8919,17 +9235,21 @@ func ParseSolanaStakingRouterServiceCreateUndelegateTransactionResponse(rsp *htt
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateUndelegateTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateUndelegateTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceCreateWithdrawTransactionResponseJSON200(response *SolanaStakingRouterServiceCreateWithdrawTransactionResponse, bodyBytes []byte) (*SolanaStakingRouterServiceCreateWithdrawTransactionResponse, error) {
+	var dest PublicSolanaV1CreateWithdrawTransactionResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8945,17 +9265,21 @@ func ParseSolanaStakingRouterServiceCreateWithdrawTransactionResponse(rsp *http.
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1CreateWithdrawTransactionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceCreateWithdrawTransactionResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseSolanaStakingRouterServiceGetTransactionStatusResponseJSON200(response *SolanaStakingRouterServiceGetTransactionStatusResponse, bodyBytes []byte) (*SolanaStakingRouterServiceGetTransactionStatusResponse, error) {
+	var dest PublicSolanaV1GetTransactionStatusResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8971,17 +9295,21 @@ func ParseSolanaStakingRouterServiceGetTransactionStatusResponse(rsp *http.Respo
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublicSolanaV1GetTransactionStatusResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseSolanaStakingRouterServiceGetTransactionStatusResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseWebhookServiceListWebhooksResponseJSON200(response *WebhookServiceListWebhooksResponse, bodyBytes []byte) (*WebhookServiceListWebhooksResponse, error) {
+	var dest ListWebhooksResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
 	return response, nil
 }
 
@@ -8997,17 +9325,30 @@ func ParseWebhookServiceListWebhooksResponse(rsp *http.Response) (*WebhookServic
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListWebhooksResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseWebhookServiceListWebhooksResponseJSON200(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseWebhookServiceRegisterWebhookResponseJSON200(response *WebhookServiceRegisterWebhookResponse, bodyBytes []byte) (*WebhookServiceRegisterWebhookResponse, error) {
+	var dest RegisterWebhookResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseWebhookServiceRegisterWebhookResponseJSON400(response *WebhookServiceRegisterWebhookResponse, bodyBytes []byte) (*WebhookServiceRegisterWebhookResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON400 = &dest
 	return response, nil
 }
 
@@ -9023,24 +9364,33 @@ func ParseWebhookServiceRegisterWebhookResponse(rsp *http.Response) (*WebhookSer
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RegisterWebhookResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseWebhookServiceRegisterWebhookResponseJSON200(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 400:
+		return parseWebhookServiceRegisterWebhookResponseJSON400(response, bodyBytes)
 
 	}
+	return response, nil
+}
 
+func parseWebhookServiceDeleteWebhookResponseJSON200(response *WebhookServiceDeleteWebhookResponse, bodyBytes []byte) (*WebhookServiceDeleteWebhookResponse, error) {
+	var dest DeleteWebhookResponse
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON200 = &dest
+	return response, nil
+}
+
+func parseWebhookServiceDeleteWebhookResponseJSON404(response *WebhookServiceDeleteWebhookResponse, bodyBytes []byte) (*WebhookServiceDeleteWebhookResponse, error) {
+	var dest interface{}
+	if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		return nil, err
+	}
+	response.JSON404 = &dest
 	return response, nil
 }
 
@@ -9056,23 +9406,14 @@ func ParseWebhookServiceDeleteWebhookResponse(rsp *http.Response) (*WebhookServi
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
-
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DeleteWebhookResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 200:
+		return parseWebhookServiceDeleteWebhookResponseJSON200(response, bodyBytes)
+
+	case responseContentTypeMatches(rsp.Header.Get("Content-Type"), "application/json") && rsp.StatusCode == 404:
+		return parseWebhookServiceDeleteWebhookResponseJSON404(response, bodyBytes)
 
 	}
-
 	return response, nil
 }

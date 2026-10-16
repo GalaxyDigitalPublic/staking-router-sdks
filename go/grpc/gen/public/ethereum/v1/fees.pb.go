@@ -127,10 +127,8 @@ type GetFeesResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Operation type.
 	OperationType FeeOperationType `protobuf:"varint,1,opt,name=operation_type,json=operationType,proto3,enum=public.ethereum.v1.FeeOperationType" json:"operation_type,omitempty"`
-	// Fee in ETH (e.g., "0.000000000000000001").
-	FeeEth string `protobuf:"bytes,2,opt,name=fee_eth,json=feeEth,proto3" json:"fee_eth,omitempty"`
-	// Fee in wei. uint64 supports fees up to ~18 ETH (more than sufficient for gas fees).
-	FeeWei uint64 `protobuf:"varint,3,opt,name=fee_wei,json=feeWei,proto3" json:"fee_wei,omitempty"`
+	// Fee in Wei as a base-10 decimal integer string.
+	FeeWei string `protobuf:"bytes,5,opt,name=fee_wei,json=feeWei,proto3" json:"fee_wei,omitempty"`
 	// Timestamp when the estimate was retrieved.
 	RetrievedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=retrieved_at,json=retrievedAt,proto3" json:"retrieved_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -174,18 +172,11 @@ func (x *GetFeesResponse) GetOperationType() FeeOperationType {
 	return FeeOperationType_UNSPECIFIED_FEE_OPERATION_TYPE
 }
 
-func (x *GetFeesResponse) GetFeeEth() string {
-	if x != nil {
-		return x.FeeEth
-	}
-	return ""
-}
-
-func (x *GetFeesResponse) GetFeeWei() uint64 {
+func (x *GetFeesResponse) GetFeeWei() string {
 	if x != nil {
 		return x.FeeWei
 	}
-	return 0
+	return ""
 }
 
 func (x *GetFeesResponse) GetRetrievedAt() *timestamppb.Timestamp {
@@ -202,12 +193,11 @@ const file_public_ethereum_v1_fees_proto_rawDesc = "" +
 	"\x1dpublic/ethereum/v1/fees.proto\x12\x12public.ethereum.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xc2\x01\n" +
 	"\x0eGetFeesRequest\x12d\n" +
 	"\x0eoperation_type\x18\x01 \x01(\x0e2$.public.ethereum.v1.FeeOperationTypeB\x17\x92A\x11J\x0f\"CONSOLIDATION\"\xe0A\x02R\roperationType:J\x92AG\n" +
-	"E*\x0eGetFeesRequest23Request to get fee estimates for an operation type.\"\xcf\x01\n" +
+	"E*\x0eGetFeesRequest23Request to get fee estimates for an operation type.\"\xcb\x01\n" +
 	"\x0fGetFeesResponse\x12K\n" +
 	"\x0eoperation_type\x18\x01 \x01(\x0e2$.public.ethereum.v1.FeeOperationTypeR\roperationType\x12\x17\n" +
-	"\afee_eth\x18\x02 \x01(\tR\x06feeEth\x12\x17\n" +
-	"\afee_wei\x18\x03 \x01(\x04R\x06feeWei\x12=\n" +
-	"\fretrieved_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vretrievedAt*Y\n" +
+	"\afee_wei\x18\x05 \x01(\tR\x06feeWei\x12=\n" +
+	"\fretrieved_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vretrievedAtJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\afee_eth*Y\n" +
 	"\x10FeeOperationType\x12\"\n" +
 	"\x1eUNSPECIFIED_FEE_OPERATION_TYPE\x10\x00\x12\x11\n" +
 	"\rCONSOLIDATION\x10\x01\x12\x0e\n" +

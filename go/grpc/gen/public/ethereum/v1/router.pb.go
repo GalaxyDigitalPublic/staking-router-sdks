@@ -769,7 +769,7 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x06pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x06pubkey\x127\n" +
 	"\x15fee_recipient_address\x18\x02 \x01(\tB\x03\xe0A\x02R\x13feeRecipientAddress\"Y\n" +
 	"\x1aUpdateFeeRecipientResponse\x12;\n" +
-	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\xad\xe4\x01\n" +
+	"\toperation\x18\x01 \x01(\v2\x1d.public.ethereum.v1.OperationR\toperation2\xb0\xe6\x01\n" +
 	"\x14StakingRouterService\x12\x9d\x05\n" +
 	"\fGetOperation\x12'.public.ethereum.v1.GetOperationRequest\x1a(.public.ethereum.v1.GetOperationResponse\"\xb9\x04\x92A\x91\x04\n" +
 	"\n" +
@@ -1052,26 +1052,25 @@ const file_public_ethereum_v1_router_proto_rawDesc = "" +
 	"\x10application/json\x12\x9e\x01{\"transaction_hash\":\"0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1b90\",\"status\":\"TX_CONFIRMED\",\"block_number\":\"21000000\",\"gas_used\":\"21000\"}J\xff\x01\n" +
 	"\x03404\x12\xf7\x01\n" +
 	"-The transaction hash is not known to the node\"\xc5\x01\n" +
-	"\x10application/json\x12\xb0\x01{\"error\":{\"code\":\"TRANSACTION_NOT_FOUND\",\"message\":\"transaction not found\",\"details\":{\"transaction_hash\":\"0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1b90\"}}}\x82\xd3\xe4\x93\x025\x123/v1/ethereum/transactions/{transaction_hash}/status\x12\x81\x03\n" +
-	"\aGetFees\x12\".public.ethereum.v1.GetFeesRequest\x1a#.public.ethereum.v1.GetFeesResponse\"\xac\x02\x92A\x8c\x02\n" +
-	"\rEthereum Fees\x12\x11Get fee estimates\x1a@Get current fee estimates for an execution-layer operation type.J\xa5\x01\n" +
-	"\x03200\x12\x9d\x01\n" +
-	"\rFee estimates\"\x8b\x01\n" +
-	"\x10application/json\x12w{\"operation_type\":\"CONSOLIDATION\",\"fee_eth\":\"0.000000000000000001\",\"fee_wei\":\"1\",\"retrieved_at\":\"2025-05-29T08:00:35Z\"}\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/ethereum/fees\x12\xae\x03\n" +
+	"\x10application/json\x12\xb0\x01{\"error\":{\"code\":\"TRANSACTION_NOT_FOUND\",\"message\":\"transaction not found\",\"details\":{\"transaction_hash\":\"0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1b90\"}}}\x82\xd3\xe4\x93\x025\x123/v1/ethereum/transactions/{transaction_hash}/status\x12\xde\x02\n" +
+	"\aGetFees\x12\".public.ethereum.v1.GetFeesRequest\x1a#.public.ethereum.v1.GetFeesResponse\"\x89\x02\x92A\xe9\x01\n" +
+	"\rEthereum Fees\x12\x11Get fee estimates\x1a@Get current fee estimates for an execution-layer operation type.J\x82\x01\n" +
+	"\x03200\x12{\n" +
+	"\rFee estimates\"j\n" +
+	"\x10application/json\x12V{\"operation_type\":\"CONSOLIDATION\",\"fee_wei\":\"1\",\"retrieved_at\":\"2025-05-29T08:00:35Z\"}\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/ethereum/fees\x12\xae\x03\n" +
 	"\x0fListWithdrawals\x12*.public.ethereum.v1.ListWithdrawalsRequest\x1a+.public.ethereum.v1.ListWithdrawalsResponse\"\xc1\x02\x92A\x9a\x02\n" +
 	"\x14Ethereum Withdrawals\x12\x10List withdrawals\x1a2Query historical withdrawal events for validators.J\xbb\x01\n" +
 	"\x03200\x12\xb3\x01\n" +
 	"\x13List of withdrawals\"\x9b\x01\n" +
-	"\x10application/json\x12\x86\x01{\"withdrawals\":[{\"pubkey\":\"0x8a2f5c3b...\",\"validator_index\":\"123456\",\"amount_gwei\":\"32000000000\",\"timestamp\":\"2024-01-01T00:00:00Z\"}]}\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/ethereum/withdrawals\x12\xa5\n" +
+	"\x10application/json\x12\x86\x01{\"withdrawals\":[{\"pubkey\":\"0x8a2f5c3b...\",\"validator_index\":\"123456\",\"amount_gwei\":\"32000000000\",\"timestamp\":\"2024-01-01T00:00:00Z\"}]}\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/ethereum/withdrawals\x12\xcb\f\n" +
 	"\n" +
-	"\n" +
-	"GetRewards\x12%.public.ethereum.v1.GetRewardsRequest\x1a&.public.ethereum.v1.GetRewardsResponse\"\xc7\t\x92A\xa4\t\n" +
+	"GetRewards\x12%.public.ethereum.v1.GetRewardsRequest\x1a&.public.ethereum.v1.GetRewardsResponse\"\xed\v\x92A\xca\v\n" +
 	"\x10Ethereum Rewards\x12\x15Get validator rewards\x1a\xcd\x01Retrieve validator reward data, scoped to the caller's validators.\n" +
 	"\n" +
-	"Provide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.J\x9b\x03\n" +
-	"\x03200\x12\x93\x03\n" +
-	"\"Reward data retrieved successfully\"\xec\x02\n" +
-	"\x10application/json\x12\xd7\x02{\"rewards\":[{\"pubkey\":\"0x8a2f5c3b...\",\"operator\":\"galaxy\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"epoch\":300000,\"rewards\":[{\"amount\":\"0.001\",\"denomination\":\"ETH\",\"type\":\"consensus\"}]}],\"total_rewards\":{\"amount\":\"1.5\",\"denomination\":\"ETH\"},\"period_total_rewards\":{\"amount\":\"0.1\",\"denomination\":\"ETH\"},\"metadata\":{\"next_cursor\":\"\",\"total_count\":42}}J\xa7\x01\n" +
+	"Provide either a date range (`start_date`/`end_date`) for daily rollups or an epoch range (`start_epoch`/`end_epoch`) for per-epoch data.J\xc1\x05\n" +
+	"\x03200\x12\xb9\x05\n" +
+	"\"Reward data retrieved successfully\"\x92\x05\n" +
+	"\x10application/json\x12\xfd\x04{\"rewards\":[{\"pubkey\":\"0xb6c621e7c7c8c574c25b6c9345cf517e984a34e83a1d501c267a7c85fa6d188304caf8fd5738e9f3d9c0e9706533b0e8\",\"operator\":\"galaxy\",\"timestamp\":\"2026-01-15T00:00:00Z\",\"epoch\":\"300000\",\"start_epoch\":\"300000\",\"end_epoch\":\"300000\",\"rewards\":[{\"type\":\"consensus\",\"amount_wei\":\"1000000000000001\",\"amount_gwei\":\"1000000\"}],\"validator_index\":\"123456\",\"effective_balance_gwei\":\"32000000000\",\"balance_gwei\":\"32100000000\"}],\"total_rewards\":{\"amount_wei\":\"1500000000000000000\",\"amount_gwei\":\"1500000000\"},\"period_total_rewards\":{\"amount_wei\":\"100000000000000000\",\"amount_gwei\":\"100000000\"},\"metadata\":{\"next_cursor\":\"\",\"total_count\":42}}J\xa7\x01\n" +
 	"\x03400\x12\x9f\x01\n" +
 	"\x1aInvalid request parameters\"\x80\x01\n" +
 	"\x10application/json\x12l{\"error\":{\"code\":\"MISSING_REQUIRED_FIELD\",\"message\":\"provide start_date/end_date or start_epoch/end_epoch\"}}J\xb9\x01\n" +
