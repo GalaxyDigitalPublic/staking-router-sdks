@@ -2150,7 +2150,7 @@
     "/v1/solana/transactions/nonce/advance": {
       "post": {
         "summary": "Advance nonce",
-        "description": "Build an unsigned transaction to rotate the durable nonce value. Use this to invalidate previously crafted transactions without submitting them.",
+        "description": "Deprecated: Solana is removing durable nonces (no date set). Build an unsigned transaction to rotate the durable nonce value. Use this to invalidate previously crafted transactions without submitting them.",
         "operationId": "SolanaStakingRouterService_AdvanceNonce",
         "responses": {
           "200": {
@@ -2205,13 +2205,14 @@
         },
         "tags": [
           "Solana Transactions"
-        ]
+        ],
+        "deprecated": true
       }
     },
     "/v1/solana/transactions/nonce/create": {
       "post": {
         "summary": "Create nonce account",
-        "description": "Build an unsigned transaction that creates and initializes a durable nonce account. The derived nonce account address is returned in the response.",
+        "description": "Deprecated: Solana is removing durable nonces (no date set). Build an unsigned transaction that creates and initializes a durable nonce account. The derived nonce account address is returned in the response.",
         "operationId": "SolanaStakingRouterService_CreateNonceAccount",
         "responses": {
           "200": {
@@ -2283,13 +2284,14 @@
         },
         "tags": [
           "Solana Transactions"
-        ]
+        ],
+        "deprecated": true
       }
     },
     "/v1/solana/transactions/nonce/withdraw": {
       "post": {
         "summary": "Withdraw from nonce account",
-        "description": "Build an unsigned transaction to withdraw lamports from a durable nonce account. Withdrawing the full balance closes the account.",
+        "description": "Deprecated: Solana is removing durable nonces (no date set). Build an unsigned transaction to withdraw lamports from a durable nonce account. Withdrawing the full balance closes the account.",
         "operationId": "SolanaStakingRouterService_WithdrawNonce",
         "responses": {
           "200": {
@@ -2347,7 +2349,8 @@
         },
         "tags": [
           "Solana Transactions"
-        ]
+        ],
+        "deprecated": true
       }
     },
     "/v1/solana/transactions/split": {
@@ -5430,7 +5433,7 @@
             "description": "Nonce authority public key (base58). Must be the authority stored in the nonce account.\nThis key is added to the transaction's required signers."
           }
         },
-        "description": "DurableNonceParams selects durable-nonce mode for a transaction request.\nWhen set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and\nembeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.\nThis removes the ~60-second blockhash expiry window, allowing offline/deferred signing.",
+        "description": "DurableNonceParams selects durable-nonce mode for a transaction request.\n\nDurable nonces are deprecated: Solana is removing them (a replacement onchain program is in\ndevelopment and no date is set). Existing integrations keep working; do not build new ones on this.\nWhen set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and\nembeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.\nThis removes the ~30-second blockhash expiry window, allowing offline/deferred signing.",
         "required": [
           "nonce_account_pubkey",
           "nonce_authority_pubkey"
@@ -5969,6 +5972,16 @@
           "fee_payer": {
             "type": "string",
             "description": "Fee payer public key (base58). Defaults to the primary authority when not specified in the request."
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. A blockhash is\nvalid for 150 blocks, about 30 seconds. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat\nlast_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         },
         "description": "SolanaTransactionItem holds per-instruction inputs, the unsigned transaction, and required signers."
@@ -6195,6 +6208,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6251,6 +6274,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6307,6 +6340,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6363,6 +6406,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6419,6 +6472,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6475,6 +6538,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6531,6 +6604,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6580,6 +6663,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6629,6 +6722,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },
@@ -6678,6 +6781,16 @@
           },
           "fee_payer": {
             "type": "string"
+          },
+          "last_valid_block_height": {
+            "type": "string",
+            "format": "uint64",
+            "description": "Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions."
           }
         }
       },

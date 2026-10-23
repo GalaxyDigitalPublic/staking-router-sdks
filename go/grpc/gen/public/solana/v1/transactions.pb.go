@@ -11,6 +11,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -1325,7 +1326,13 @@ type SolanaTransactionItem struct {
 	// Recent blockhash embedded in the transaction (base58).
 	Blockhash string `protobuf:"bytes,4,opt,name=blockhash,proto3" json:"blockhash,omitempty"`
 	// Fee payer public key (base58). Defaults to the primary authority when not specified in the request.
-	FeePayer      string `protobuf:"bytes,5,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
+	FeePayer string `protobuf:"bytes,5,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
+	// Deadline: the transaction is dropped once the chain passes this block height. A blockhash is
+	// valid for 150 blocks, about 30 seconds. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *uint64 `protobuf:"varint,6,opt,name=last_valid_block_height,json=lastValidBlockHeight,proto3,oneof" json:"last_valid_block_height,omitempty"`
+	// Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat
+	// last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1395,10 +1402,27 @@ func (x *SolanaTransactionItem) GetFeePayer() string {
 	return ""
 }
 
+func (x *SolanaTransactionItem) GetLastValidBlockHeight() uint64 {
+	if x != nil && x.LastValidBlockHeight != nil {
+		return *x.LastValidBlockHeight
+	}
+	return 0
+}
+
+func (x *SolanaTransactionItem) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
 // DurableNonceParams selects durable-nonce mode for a transaction request.
+//
+// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+// development and no date is set). Existing integrations keep working; do not build new ones on this.
 // When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 // embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 type DurableNonceParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Nonce account public key (base58). Must be an initialized SystemProgram nonce account.
@@ -1464,7 +1488,8 @@ type CreateStakeAccountRequest struct {
 	StakeAuthorityPubkey string `protobuf:"bytes,3,opt,name=stake_authority_pubkey,json=stakeAuthorityPubkey,proto3" json:"stake_authority_pubkey,omitempty"`
 	// Withdraw authority public key (base58). If empty, defaults to funding_pubkey.
 	WithdrawAuthorityPubkey string `protobuf:"bytes,4,opt,name=withdraw_authority_pubkey,json=withdrawAuthorityPubkey,proto3" json:"withdraw_authority_pubkey,omitempty"`
-	// If set, the transaction uses a durable nonce instead of a recent blockhash.
+	// If set, the transaction uses a durable nonce instead of a recent blockhash. Durable nonces are
+	// deprecated: Solana is removing them and has not set a date.
 	DurableNonce  *DurableNonceParams `protobuf:"bytes,5,opt,name=durable_nonce,json=durableNonce,proto3" json:"durable_nonce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1587,7 +1612,8 @@ type CreateDelegateTransactionRequest struct {
 	StakeAuthorityPubkey string `protobuf:"bytes,3,opt,name=stake_authority_pubkey,json=stakeAuthorityPubkey,proto3" json:"stake_authority_pubkey,omitempty"`
 	// Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
 	FeePayer string `protobuf:"bytes,4,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
-	// If set, the transaction uses a durable nonce instead of a recent blockhash.
+	// If set, the transaction uses a durable nonce instead of a recent blockhash. Durable nonces are
+	// deprecated: Solana is removing them and has not set a date.
 	DurableNonce  *DurableNonceParams `protobuf:"bytes,5,opt,name=durable_nonce,json=durableNonce,proto3" json:"durable_nonce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1709,7 +1735,8 @@ type CreateUndelegateTransactionRequest struct {
 	StakeAuthorityPubkey string `protobuf:"bytes,2,opt,name=stake_authority_pubkey,json=stakeAuthorityPubkey,proto3" json:"stake_authority_pubkey,omitempty"`
 	// Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
 	FeePayer string `protobuf:"bytes,3,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
-	// If set, the transaction uses a durable nonce instead of a recent blockhash.
+	// If set, the transaction uses a durable nonce instead of a recent blockhash. Durable nonces are
+	// deprecated: Solana is removing them and has not set a date.
 	DurableNonce  *DurableNonceParams `protobuf:"bytes,4,opt,name=durable_nonce,json=durableNonce,proto3" json:"durable_nonce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1828,7 +1855,8 @@ type CreateWithdrawTransactionRequest struct {
 	RecipientPubkey string `protobuf:"bytes,4,opt,name=recipient_pubkey,json=recipientPubkey,proto3" json:"recipient_pubkey,omitempty"`
 	// Fee payer public key (base58). If empty, defaults to withdraw_authority_pubkey.
 	FeePayer string `protobuf:"bytes,5,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
-	// If set, the transaction uses a durable nonce instead of a recent blockhash.
+	// If set, the transaction uses a durable nonce instead of a recent blockhash. Durable nonces are
+	// deprecated: Solana is removing them and has not set a date.
 	DurableNonce  *DurableNonceParams `protobuf:"bytes,6,opt,name=durable_nonce,json=durableNonce,proto3" json:"durable_nonce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1959,7 +1987,8 @@ type CreateSplitTransactionRequest struct {
 	StakeAuthorityPubkey string `protobuf:"bytes,3,opt,name=stake_authority_pubkey,json=stakeAuthorityPubkey,proto3" json:"stake_authority_pubkey,omitempty"`
 	// Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
 	FeePayer string `protobuf:"bytes,4,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
-	// If set, the transaction uses a durable nonce instead of a recent blockhash.
+	// If set, the transaction uses a durable nonce instead of a recent blockhash. Durable nonces are
+	// deprecated: Solana is removing them and has not set a date.
 	DurableNonce  *DurableNonceParams `protobuf:"bytes,5,opt,name=durable_nonce,json=durableNonce,proto3" json:"durable_nonce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2084,7 +2113,8 @@ type CreateMergeTransactionRequest struct {
 	StakeAuthorityPubkey string `protobuf:"bytes,3,opt,name=stake_authority_pubkey,json=stakeAuthorityPubkey,proto3" json:"stake_authority_pubkey,omitempty"`
 	// Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
 	FeePayer string `protobuf:"bytes,4,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
-	// If set, the transaction uses a durable nonce instead of a recent blockhash.
+	// If set, the transaction uses a durable nonce instead of a recent blockhash. Durable nonces are
+	// deprecated: Solana is removing them and has not set a date.
 	DurableNonce  *DurableNonceParams `protobuf:"bytes,5,opt,name=durable_nonce,json=durableNonce,proto3" json:"durable_nonce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2208,7 +2238,8 @@ type CreateTransferTransactionRequest struct {
 	AmountLamports    uint64 `protobuf:"varint,3,opt,name=amount_lamports,json=amountLamports,proto3" json:"amount_lamports,omitempty"`
 	// Fee payer public key (base58). If empty, defaults to source_pubkey.
 	FeePayer string `protobuf:"bytes,4,opt,name=fee_payer,json=feePayer,proto3" json:"fee_payer,omitempty"`
-	// If set, the transaction uses a durable nonce instead of a recent blockhash.
+	// If set, the transaction uses a durable nonce instead of a recent blockhash. Durable nonces are
+	// deprecated: Solana is removing them and has not set a date.
 	DurableNonce  *DurableNonceParams `protobuf:"bytes,5,opt,name=durable_nonce,json=durableNonce,proto3" json:"durable_nonce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2941,7 +2972,7 @@ var File_public_solana_v1_transactions_proto protoreflect.FileDescriptor
 
 const file_public_solana_v1_transactions_proto_rawDesc = "" +
 	"\n" +
-	"#public/solana/v1/transactions.proto\x12\x10public.solana.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xfa\x01\n" +
+	"#public/solana/v1/transactions.proto\x12\x10public.solana.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xfa\x01\n" +
 	"\x1bCreateAccountWithSeedParams\x12\x12\n" +
 	"\x04base\x18\x01 \x01(\tR\x04base\x12\x12\n" +
 	"\x04seed\x18\x02 \x01(\tR\x04seed\x12\x1a\n" +
@@ -3034,13 +3065,17 @@ const file_public_solana_v1_transactions_proto_rawDesc = "" +
 	"program_id\x18\x01 \x01(\tR\tprogramId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12;\n" +
 	"\x06params\x18\x03 \x01(\v2#.public.solana.v1.InstructionParamsR\x06params\x12\x12\n" +
-	"\x04data\x18\x04 \x01(\tR\x04data\"\xe8\x01\n" +
+	"\x04data\x18\x04 \x01(\tR\x04data\"\xfb\x02\n" +
 	"\x15SolanaTransactionItem\x12G\n" +
 	"\finstructions\x18\x01 \x03(\v2#.public.solana.v1.InstructionInputsR\finstructions\x121\n" +
 	"\x14unsigned_transaction\x18\x02 \x01(\tR\x13unsignedTransaction\x12\x18\n" +
 	"\asigners\x18\x03 \x03(\tR\asigners\x12\x1c\n" +
 	"\tblockhash\x18\x04 \x01(\tR\tblockhash\x12\x1b\n" +
-	"\tfee_payer\x18\x05 \x01(\tR\bfeePayer\"\x86\x01\n" +
+	"\tfee_payer\x18\x05 \x01(\tR\bfeePayer\x12:\n" +
+	"\x17last_valid_block_height\x18\x06 \x01(\x04H\x00R\x14lastValidBlockHeight\x88\x01\x01\x129\n" +
+	"\n" +
+	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAtB\x1a\n" +
+	"\x18_last_valid_block_height\"\x86\x01\n" +
 	"\x12DurableNonceParams\x125\n" +
 	"\x14nonce_account_pubkey\x18\x01 \x01(\tB\x03\xe0A\x02R\x12nonceAccountPubkey\x129\n" +
 	"\x16nonce_authority_pubkey\x18\x02 \x01(\tB\x03\xe0A\x02R\x14nonceAuthorityPubkey\"\xb6\x04\n" +
@@ -3255,6 +3290,7 @@ var file_public_solana_v1_transactions_proto_goTypes = []any{
 	(*BroadcastTransactionResponse)(nil),        // 38: public.solana.v1.BroadcastTransactionResponse
 	(*GetTransactionStatusRequest)(nil),         // 39: public.solana.v1.GetTransactionStatusRequest
 	(*GetTransactionStatusResponse)(nil),        // 40: public.solana.v1.GetTransactionStatusResponse
+	(*timestamppb.Timestamp)(nil),               // 41: google.protobuf.Timestamp
 }
 var file_public_solana_v1_transactions_proto_depIdxs = []int32{
 	2,  // 0: public.solana.v1.InstructionParams.create_account_with_seed:type_name -> public.solana.v1.CreateAccountWithSeedParams
@@ -3270,31 +3306,32 @@ var file_public_solana_v1_transactions_proto_depIdxs = []int32{
 	12, // 10: public.solana.v1.InstructionParams.withdraw_nonce_account:type_name -> public.solana.v1.WithdrawNonceAccountParams
 	13, // 11: public.solana.v1.InstructionInputs.params:type_name -> public.solana.v1.InstructionParams
 	14, // 12: public.solana.v1.SolanaTransactionItem.instructions:type_name -> public.solana.v1.InstructionInputs
-	16, // 13: public.solana.v1.CreateStakeAccountRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
-	15, // 14: public.solana.v1.CreateStakeAccountResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	16, // 15: public.solana.v1.CreateDelegateTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
-	15, // 16: public.solana.v1.CreateDelegateTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	16, // 17: public.solana.v1.CreateUndelegateTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
-	15, // 18: public.solana.v1.CreateUndelegateTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	16, // 19: public.solana.v1.CreateWithdrawTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
-	15, // 20: public.solana.v1.CreateWithdrawTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	16, // 21: public.solana.v1.CreateSplitTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
-	15, // 22: public.solana.v1.CreateSplitTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	16, // 23: public.solana.v1.CreateMergeTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
-	15, // 24: public.solana.v1.CreateMergeTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	16, // 25: public.solana.v1.CreateTransferTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
-	15, // 26: public.solana.v1.CreateTransferTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	15, // 27: public.solana.v1.CreateNonceAccountResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	15, // 28: public.solana.v1.AdvanceNonceResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	15, // 29: public.solana.v1.WithdrawNonceResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
-	0,  // 30: public.solana.v1.BroadcastTransactionRequest.action:type_name -> public.solana.v1.SolanaAction
-	0,  // 31: public.solana.v1.BroadcastTransactionResponse.action:type_name -> public.solana.v1.SolanaAction
-	1,  // 32: public.solana.v1.GetTransactionStatusResponse.status:type_name -> public.solana.v1.TransactionStatus
-	33, // [33:33] is the sub-list for method output_type
-	33, // [33:33] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	41, // 13: public.solana.v1.SolanaTransactionItem.expires_at:type_name -> google.protobuf.Timestamp
+	16, // 14: public.solana.v1.CreateStakeAccountRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
+	15, // 15: public.solana.v1.CreateStakeAccountResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	16, // 16: public.solana.v1.CreateDelegateTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
+	15, // 17: public.solana.v1.CreateDelegateTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	16, // 18: public.solana.v1.CreateUndelegateTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
+	15, // 19: public.solana.v1.CreateUndelegateTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	16, // 20: public.solana.v1.CreateWithdrawTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
+	15, // 21: public.solana.v1.CreateWithdrawTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	16, // 22: public.solana.v1.CreateSplitTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
+	15, // 23: public.solana.v1.CreateSplitTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	16, // 24: public.solana.v1.CreateMergeTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
+	15, // 25: public.solana.v1.CreateMergeTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	16, // 26: public.solana.v1.CreateTransferTransactionRequest.durable_nonce:type_name -> public.solana.v1.DurableNonceParams
+	15, // 27: public.solana.v1.CreateTransferTransactionResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	15, // 28: public.solana.v1.CreateNonceAccountResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	15, // 29: public.solana.v1.AdvanceNonceResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	15, // 30: public.solana.v1.WithdrawNonceResponse.transactions:type_name -> public.solana.v1.SolanaTransactionItem
+	0,  // 31: public.solana.v1.BroadcastTransactionRequest.action:type_name -> public.solana.v1.SolanaAction
+	0,  // 32: public.solana.v1.BroadcastTransactionResponse.action:type_name -> public.solana.v1.SolanaAction
+	1,  // 33: public.solana.v1.GetTransactionStatusResponse.status:type_name -> public.solana.v1.TransactionStatus
+	34, // [34:34] is the sub-list for method output_type
+	34, // [34:34] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_public_solana_v1_transactions_proto_init() }
@@ -3315,6 +3352,7 @@ func file_public_solana_v1_transactions_proto_init() {
 		(*InstructionParams_AdvanceNonceAccount)(nil),
 		(*InstructionParams_WithdrawNonceAccount)(nil),
 	}
+	file_public_solana_v1_transactions_proto_msgTypes[13].OneofWrappers = []any{}
 	file_public_solana_v1_transactions_proto_msgTypes[38].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

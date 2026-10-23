@@ -1540,12 +1540,18 @@ type PublicSolanaV1AdvanceNonceResponse struct {
 // PublicSolanaV1AdvanceNonceTransactionItem Transaction item for the AdvanceNonce endpoint.
 type PublicSolanaV1AdvanceNonceTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1AdvanceNonceInstructionInputs `json:"instructions,omitempty"`
-	Signers             *[]string                                      `json:"signers,omitempty"`
-	UnsignedTransaction *string                                        `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1AdvanceNonceInstructionInputs `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1BroadcastTransactionRequest defines model for public.solana.v1.BroadcastTransactionRequest.
@@ -1595,9 +1601,12 @@ type PublicSolanaV1CreateAccountWithSeedParams struct {
 // PublicSolanaV1CreateDelegateTransactionRequest Request to create an unsigned delegation transaction.
 type PublicSolanaV1CreateDelegateTransactionRequest struct {
 	// DurableNonce DurableNonceParams selects durable-nonce mode for a transaction request.
+	//
+	// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+	// development and no date is set). Existing integrations keep working; do not build new ones on this.
 	// When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 	// embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-	// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+	// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 	DurableNonce *PublicSolanaV1DurableNonceParams `json:"durable_nonce,omitempty"`
 
 	// FeePayer Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
@@ -1623,9 +1632,12 @@ type PublicSolanaV1CreateMergeTransactionRequest struct {
 	DestinationAccountPubkey string `json:"destination_account_pubkey"`
 
 	// DurableNonce DurableNonceParams selects durable-nonce mode for a transaction request.
+	//
+	// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+	// development and no date is set). Existing integrations keep working; do not build new ones on this.
 	// When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 	// embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-	// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+	// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 	DurableNonce *PublicSolanaV1DurableNonceParams `json:"durable_nonce,omitempty"`
 
 	// FeePayer Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
@@ -1689,12 +1701,18 @@ type PublicSolanaV1CreateNonceAccountResponse struct {
 // PublicSolanaV1CreateNonceAccountTransactionItem Transaction item for the CreateNonceAccount endpoint.
 type PublicSolanaV1CreateNonceAccountTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1CreateNonceAccountInstructionInputs `json:"instructions,omitempty"`
-	Signers             *[]string                                            `json:"signers,omitempty"`
-	UnsignedTransaction *string                                              `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1CreateNonceAccountInstructionInputs `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1CreateSplitTransactionRequest Request to create an unsigned stake split transaction.
@@ -1705,9 +1723,12 @@ type PublicSolanaV1CreateSplitTransactionRequest struct {
 	AmountLamports string `json:"amount_lamports"`
 
 	// DurableNonce DurableNonceParams selects durable-nonce mode for a transaction request.
+	//
+	// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+	// development and no date is set). Existing integrations keep working; do not build new ones on this.
 	// When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 	// embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-	// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+	// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 	DurableNonce *PublicSolanaV1DurableNonceParams `json:"durable_nonce,omitempty"`
 
 	// FeePayer Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
@@ -1733,9 +1754,12 @@ type PublicSolanaV1CreateStakeAccountRequest struct {
 	AmountLamports string `json:"amount_lamports"`
 
 	// DurableNonce DurableNonceParams selects durable-nonce mode for a transaction request.
+	//
+	// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+	// development and no date is set). Existing integrations keep working; do not build new ones on this.
 	// When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 	// embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-	// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+	// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 	DurableNonce *PublicSolanaV1DurableNonceParams `json:"durable_nonce,omitempty"`
 
 	// FundingPubkey Funding account public key (base58). Pays rent and transaction fees; becomes authority if not overridden.
@@ -1761,9 +1785,12 @@ type PublicSolanaV1CreateTransferTransactionRequest struct {
 	DestinationPubkey string `json:"destination_pubkey"`
 
 	// DurableNonce DurableNonceParams selects durable-nonce mode for a transaction request.
+	//
+	// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+	// development and no date is set). Existing integrations keep working; do not build new ones on this.
 	// When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 	// embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-	// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+	// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 	DurableNonce *PublicSolanaV1DurableNonceParams `json:"durable_nonce,omitempty"`
 
 	// FeePayer Fee payer public key (base58). If empty, defaults to source_pubkey.
@@ -1783,9 +1810,12 @@ type PublicSolanaV1CreateTransferTransactionResponse struct {
 // After deactivation the stake becomes withdrawable at the end of the current epoch.
 type PublicSolanaV1CreateUndelegateTransactionRequest struct {
 	// DurableNonce DurableNonceParams selects durable-nonce mode for a transaction request.
+	//
+	// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+	// development and no date is set). Existing integrations keep working; do not build new ones on this.
 	// When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 	// embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-	// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+	// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 	DurableNonce *PublicSolanaV1DurableNonceParams `json:"durable_nonce,omitempty"`
 
 	// FeePayer Fee payer public key (base58). If empty, defaults to stake_authority_pubkey.
@@ -1810,9 +1840,12 @@ type PublicSolanaV1CreateWithdrawTransactionRequest struct {
 	AmountLamports string `json:"amount_lamports"`
 
 	// DurableNonce DurableNonceParams selects durable-nonce mode for a transaction request.
+	//
+	// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+	// development and no date is set). Existing integrations keep working; do not build new ones on this.
 	// When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 	// embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-	// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+	// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 	DurableNonce *PublicSolanaV1DurableNonceParams `json:"durable_nonce,omitempty"`
 
 	// FeePayer Fee payer public key (base58). If empty, defaults to withdraw_authority_pubkey.
@@ -1869,12 +1902,18 @@ type PublicSolanaV1DelegateStakeParams struct {
 // PublicSolanaV1DelegateTransactionItem Transaction item for the Delegate endpoint.
 type PublicSolanaV1DelegateTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1DelegateTransactionItem_Instructions_Item `json:"instructions,omitempty"`
-	Signers             *[]string                                                  `json:"signers,omitempty"`
-	UnsignedTransaction *string                                                    `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1DelegateTransactionItem_Instructions_Item `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1DelegateTransactionItem_Instructions_Item defines model for public.solana.v1.DelegateTransactionItem.instructions.Item.
@@ -1883,9 +1922,12 @@ type PublicSolanaV1DelegateTransactionItem_Instructions_Item struct {
 }
 
 // PublicSolanaV1DurableNonceParams DurableNonceParams selects durable-nonce mode for a transaction request.
+//
+// Durable nonces are deprecated: Solana is removing them (a replacement onchain program is in
+// development and no date is set). Existing integrations keep working; do not build new ones on this.
 // When set, the gateway fetches the current nonce value from nonce_account_pubkey on-chain and
 // embeds it as the transaction blockhash, with AdvanceNonceAccount prepended as the first instruction.
-// This removes the ~60-second blockhash expiry window, allowing offline/deferred signing.
+// This removes the ~30-second blockhash expiry window, allowing offline/deferred signing.
 type PublicSolanaV1DurableNonceParams struct {
 	// NonceAccountPubkey Nonce account public key (base58). Must be an initialized SystemProgram nonce account.
 	NonceAccountPubkey string `json:"nonce_account_pubkey"`
@@ -2100,12 +2142,18 @@ type PublicSolanaV1MergeParams struct {
 // PublicSolanaV1MergeTransactionItem Transaction item for the Merge endpoint.
 type PublicSolanaV1MergeTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1MergeTransactionItem_Instructions_Item `json:"instructions,omitempty"`
-	Signers             *[]string                                               `json:"signers,omitempty"`
-	UnsignedTransaction *string                                                 `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1MergeTransactionItem_Instructions_Item `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1MergeTransactionItem_Instructions_Item defines model for public.solana.v1.MergeTransactionItem.instructions.Item.
@@ -2269,12 +2317,18 @@ type PublicSolanaV1SplitParams struct {
 // PublicSolanaV1SplitTransactionItem Transaction item for the Split endpoint.
 type PublicSolanaV1SplitTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1SplitTransactionItem_Instructions_Item `json:"instructions,omitempty"`
-	Signers             *[]string                                               `json:"signers,omitempty"`
-	UnsignedTransaction *string                                                 `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1SplitTransactionItem_Instructions_Item `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1SplitTransactionItem_Instructions_Item defines model for public.solana.v1.SplitTransactionItem.instructions.Item.
@@ -2305,12 +2359,18 @@ type PublicSolanaV1StakeAccountInstructionParams struct {
 // PublicSolanaV1StakeAccountTransactionItem Transaction item for the StakeAccount endpoint.
 type PublicSolanaV1StakeAccountTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1StakeAccountTransactionItem_Instructions_Item `json:"instructions,omitempty"`
-	Signers             *[]string                                                      `json:"signers,omitempty"`
-	UnsignedTransaction *string                                                        `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1StakeAccountTransactionItem_Instructions_Item `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1StakeAccountTransactionItem_Instructions_Item defines model for public.solana.v1.StakeAccountTransactionItem.instructions.Item.
@@ -2353,12 +2413,18 @@ type PublicSolanaV1TransferParams struct {
 // PublicSolanaV1TransferTransactionItem Transaction item for the Transfer endpoint.
 type PublicSolanaV1TransferTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1TransferTransactionItem_Instructions_Item `json:"instructions,omitempty"`
-	Signers             *[]string                                                  `json:"signers,omitempty"`
-	UnsignedTransaction *string                                                    `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1TransferTransactionItem_Instructions_Item `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1TransferTransactionItem_Instructions_Item defines model for public.solana.v1.TransferTransactionItem.instructions.Item.
@@ -2385,12 +2451,18 @@ type PublicSolanaV1UndelegateInstructionInputs struct {
 // PublicSolanaV1UndelegateTransactionItem Transaction item for the Undelegate endpoint.
 type PublicSolanaV1UndelegateTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1UndelegateTransactionItem_Instructions_Item `json:"instructions,omitempty"`
-	Signers             *[]string                                                    `json:"signers,omitempty"`
-	UnsignedTransaction *string                                                      `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1UndelegateTransactionItem_Instructions_Item `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1UndelegateTransactionItem_Instructions_Item defines model for public.solana.v1.UndelegateTransactionItem.instructions.Item.
@@ -2471,12 +2543,18 @@ type PublicSolanaV1WithdrawNonceResponse struct {
 // PublicSolanaV1WithdrawNonceTransactionItem Transaction item for the WithdrawNonce endpoint.
 type PublicSolanaV1WithdrawNonceTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1WithdrawNonceInstructionInputs `json:"instructions,omitempty"`
-	Signers             *[]string                                       `json:"signers,omitempty"`
-	UnsignedTransaction *string                                         `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1WithdrawNonceInstructionInputs `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1WithdrawParams Params for the "Withdraw" instruction.
@@ -2493,12 +2571,18 @@ type PublicSolanaV1WithdrawParams struct {
 // PublicSolanaV1WithdrawTransactionItem Transaction item for the Withdraw endpoint.
 type PublicSolanaV1WithdrawTransactionItem struct {
 	Blockhash *string `json:"blockhash,omitempty"`
-	FeePayer  *string `json:"fee_payer,omitempty"`
+
+	// ExpiresAt Estimate of when the blockhash expires, about 30 seconds after it was fetched. Treat last_valid_block_height as the deadline. Omitted for durable-nonce transactions.
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	FeePayer  *string    `json:"fee_payer,omitempty"`
 
 	// Instructions Instructions in order.
-	Instructions        *[]PublicSolanaV1WithdrawTransactionItem_Instructions_Item `json:"instructions,omitempty"`
-	Signers             *[]string                                                  `json:"signers,omitempty"`
-	UnsignedTransaction *string                                                    `json:"unsigned_transaction,omitempty"`
+	Instructions *[]PublicSolanaV1WithdrawTransactionItem_Instructions_Item `json:"instructions,omitempty"`
+
+	// LastValidBlockHeight Deadline: the transaction is dropped once the chain passes this block height. Omitted for durable-nonce transactions.
+	LastValidBlockHeight *string   `json:"last_valid_block_height,omitempty"`
+	Signers              *[]string `json:"signers,omitempty"`
+	UnsignedTransaction  *string   `json:"unsigned_transaction,omitempty"`
 }
 
 // PublicSolanaV1WithdrawTransactionItem_Instructions_Item defines model for public.solana.v1.WithdrawTransactionItem.instructions.Item.

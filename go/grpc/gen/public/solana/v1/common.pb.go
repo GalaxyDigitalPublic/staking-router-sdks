@@ -34,6 +34,9 @@ const (
 	ErrorCode_NONCE_ACCOUNT_NOT_FOUND  ErrorCode = 3
 	ErrorCode_NONCE_ALREADY_USED       ErrorCode = 4
 	ErrorCode_NONCE_AUTHORITY_MISMATCH ErrorCode = 5
+	// Transaction Errors (409)
+	// The signed transaction's blockhash is no longer valid. Request a new transaction and sign it faster.
+	ErrorCode_BLOCKHASH_EXPIRED ErrorCode = 6
 	// Service Errors — used internally for error scrubbing; not returned directly.
 	ErrorCode_INTERNAL_ERROR ErrorCode = 90
 )
@@ -47,6 +50,7 @@ var (
 		3:  "NONCE_ACCOUNT_NOT_FOUND",
 		4:  "NONCE_ALREADY_USED",
 		5:  "NONCE_AUTHORITY_MISMATCH",
+		6:  "BLOCKHASH_EXPIRED",
 		90: "INTERNAL_ERROR",
 	}
 	ErrorCode_value = map[string]int32{
@@ -56,6 +60,7 @@ var (
 		"NONCE_ACCOUNT_NOT_FOUND":  3,
 		"NONCE_ALREADY_USED":       4,
 		"NONCE_AUTHORITY_MISMATCH": 5,
+		"BLOCKHASH_EXPIRED":        6,
 		"INTERNAL_ERROR":           90,
 	}
 )
@@ -285,14 +290,15 @@ const file_public_solana_v1_common_proto_rawDesc = "" +
 	"\f_total_count\"P\n" +
 	"\x12GalaxySolanaParams\x12 \n" +
 	"\vparticipant\x18\x01 \x01(\tR\vparticipant\x12\x18\n" +
-	"\aaccount\x18\x02 \x01(\tR\aaccount*\xc5\x01\n" +
+	"\aaccount\x18\x02 \x01(\tR\aaccount*\xdc\x01\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16UNSPECIFIED_ERROR_CODE\x10\x00\x12\x1b\n" +
 	"\x17STAKE_ACCOUNT_NOT_FOUND\x10\x01\x12\x18\n" +
 	"\x14STAKE_ACCOUNT_EXISTS\x10\x02\x12\x1b\n" +
 	"\x17NONCE_ACCOUNT_NOT_FOUND\x10\x03\x12\x16\n" +
 	"\x12NONCE_ALREADY_USED\x10\x04\x12\x1c\n" +
-	"\x18NONCE_AUTHORITY_MISMATCH\x10\x05\x12\x12\n" +
+	"\x18NONCE_AUTHORITY_MISMATCH\x10\x05\x12\x15\n" +
+	"\x11BLOCKHASH_EXPIRED\x10\x06\x12\x12\n" +
 	"\x0eINTERNAL_ERROR\x10ZB\xe1\x01\n" +
 	"\x14com.public.solana.v1B\vCommonProtoP\x01ZXgithub.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc/gen/public/solana/v1;solanav1\xa2\x02\x03PSX\xaa\x02\x10Public.Solana.V1\xca\x02\x11Public_\\Solana\\V1\xe2\x02\x1dPublic_\\Solana\\V1\\GPBMetadata\xea\x02\x12Public::Solana::V1b\x06proto3"
 
