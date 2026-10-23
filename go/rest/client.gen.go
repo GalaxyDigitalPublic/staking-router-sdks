@@ -321,7 +321,11 @@ type DepositArtifact struct {
 	// DepositData DepositData contains validator deposit information.
 	DepositData *DepositData `json:"deposit_data,omitempty"`
 
-	// DepositTransaction DepositTransaction contains the deposit contract call data.
+	// DepositTransaction DepositTransaction contains the unchanged original deposit contract call.
+	// Artifacts from the same provision response may carry identical transactions.
+	// Its value is the full funding amount of all of them, not one validator's:
+	// de-duplicate by (to, value, data) and submit each distinct transaction once,
+	// never once per artifact. Optional when the operator supplies no complete transaction.
 	DepositTransaction *DepositTransaction `json:"deposit_transaction,omitempty"`
 
 	// Pubkey Validator public key.
@@ -352,15 +356,19 @@ type DepositData struct {
 	WithdrawalCredentials string `json:"withdrawal_credentials"`
 }
 
-// DepositTransaction DepositTransaction contains the deposit contract call data.
+// DepositTransaction DepositTransaction contains the unchanged original deposit contract call.
+// Artifacts from the same provision response may carry identical transactions.
+// Its value is the full funding amount of all of them, not one validator's:
+// de-duplicate by (to, value, data) and submit each distinct transaction once,
+// never once per artifact. Optional when the operator supplies no complete transaction.
 type DepositTransaction struct {
-	// Data Encoded calldata for the deposit.
+	// Data Encoded calldata from the original batch transaction.
 	Data string `json:"data"`
 
 	// To Deposit contract address.
 	To string `json:"to"`
 
-	// Value Value in wei to send with the transaction.
+	// Value Full original batch value in wei to send with the transaction.
 	Value string `json:"value"`
 }
 
@@ -788,7 +796,7 @@ type ListWebhooksResponse struct {
 	Endpoints *[]WebhookEndpoint `json:"endpoints,omitempty"`
 }
 
-// ListWithdrawalsRequest Request to list historical withdrawal events.
+// ListWithdrawalsRequest Request to list historical withdrawal events. Rows without indexed block or timestamp metadata are omitted; continue with metadata.next_cursor even when a page is empty.
 type ListWithdrawalsRequest struct {
 	// EndDate Filter by end date (YYYY-MM-DD, UTC).
 	EndDate *string `json:"end_date,omitempty"`
@@ -817,7 +825,7 @@ type ListWithdrawalsResponse struct {
 	// Metadata PageInfo contains pagination metadata for list responses.
 	Metadata *PageInfo `json:"metadata,omitempty"`
 
-	// Withdrawals List of withdrawals.
+	// Withdrawals Complete withdrawals with block and timestamp metadata; incomplete upstream rows are skipped.
 	Withdrawals *[]Withdrawal `json:"withdrawals,omitempty"`
 }
 
@@ -828,7 +836,11 @@ type OperationArtifact struct {
 	// DepositData DepositData contains validator deposit information.
 	DepositData *DepositData `json:"deposit_data,omitempty"`
 
-	// DepositTransaction DepositTransaction contains the deposit contract call data.
+	// DepositTransaction DepositTransaction contains the unchanged original deposit contract call.
+	// Artifacts from the same provision response may carry identical transactions.
+	// Its value is the full funding amount of all of them, not one validator's:
+	// de-duplicate by (to, value, data) and submit each distinct transaction once,
+	// never once per artifact. Optional when the operator supplies no complete transaction.
 	DepositTransaction *DepositTransaction `json:"deposit_transaction,omitempty"`
 
 	// ExitMessage ExitMessageData contains a pre-signed exit message for CL exits.

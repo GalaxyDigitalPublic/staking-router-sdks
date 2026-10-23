@@ -24,6 +24,8 @@ const (
 )
 
 // ListWithdrawalsRequest is the request for listing withdrawals.
+// Rows missing indexed block or timestamp metadata are omitted from the response;
+// clients should continue from metadata.next_cursor even when a page is empty.
 type ListWithdrawalsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Filter by validator public keys (max 50).
@@ -126,9 +128,9 @@ func (x *ListWithdrawalsRequest) GetNextCursor() string {
 // ListWithdrawalsResponse is the response containing withdrawals.
 type ListWithdrawalsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// List of withdrawals.
+	// Complete withdrawals with block and timestamp metadata; incomplete upstream rows are skipped.
 	Withdrawals []*Withdrawal `protobuf:"bytes,1,rep,name=withdrawals,proto3" json:"withdrawals,omitempty"`
-	// Pagination metadata.
+	// Pagination metadata; next_cursor is the exact upstream continuation cursor.
 	Metadata      *PageInfo `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -310,7 +312,7 @@ var File_public_ethereum_v1_withdrawals_proto protoreflect.FileDescriptor
 
 const file_public_ethereum_v1_withdrawals_proto_rawDesc = "" +
 	"\n" +
-	"$public/ethereum/v1/withdrawals.proto\x12\x12public.ethereum.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\xc1\x03\n" +
+	"$public/ethereum/v1/withdrawals.proto\x12\x12public.ethereum.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fpublic/ethereum/v1/common.proto\"\xc1\x04\n" +
 	"\x16ListWithdrawalsRequest\x12\x18\n" +
 	"\apubkeys\x18\x01 \x03(\tR\apubkeys\x121\n" +
 	"\vstart_epoch\x18\x03 \x01(\x04B\v\x92A\bJ\x06300000H\x00R\n" +
@@ -321,8 +323,8 @@ const file_public_ethereum_v1_withdrawals_proto_rawDesc = "" +
 	"\bend_date\x18\x06 \x01(\tB\x11\x92A\x0eJ\f\"2026-01-31\"R\aendDate\x12$\n" +
 	"\tpage_size\x18b \x01(\x05B\a\x92A\x04J\x0220R\bpageSize\x12\x1f\n" +
 	"\vnext_cursor\x18c \x01(\tR\n" +
-	"nextCursor:L\x92AI\n" +
-	"G*\x16ListWithdrawalsRequest2-Request to list historical withdrawal events.B\x0e\n" +
+	"nextCursor:\xcb\x01\x92A\xc7\x01\n" +
+	"\xc4\x01*\x16ListWithdrawalsRequest2\xa9\x01Request to list historical withdrawal events. Rows without indexed block or timestamp metadata are omitted; continue with metadata.next_cursor even when a page is empty.B\x0e\n" +
 	"\f_start_epochB\f\n" +
 	"\n" +
 	"_end_epochJ\x04\b\x02\x10\x03R\x12withdrawal_address\"\x95\x01\n" +

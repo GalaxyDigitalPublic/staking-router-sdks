@@ -1640,7 +1640,7 @@
               }
             }
           },
-          "description": "Request to list historical withdrawal events.",
+          "description": "Request to list historical withdrawal events. Rows without indexed block or timestamp metadata are omitted; continue with metadata.next_cursor even when a page is empty.",
           "required": true
         },
         "tags": [
@@ -3095,14 +3095,14 @@
           },
           "value": {
             "type": "string",
-            "description": "Value in wei to send with the transaction."
+            "description": "Full original batch value in wei to send with the transaction."
           },
           "data": {
             "type": "string",
-            "description": "Encoded calldata for the deposit."
+            "description": "Encoded calldata from the original batch transaction."
           }
         },
-        "description": "DepositTransaction contains the deposit contract call data.",
+        "description": "DepositTransaction contains the unchanged original deposit contract call.\nArtifacts from the same provision response may carry identical transactions.\nIts value is the full funding amount of all of them, not one validator's:\nde-duplicate by (to, value, data) and submit each distinct transaction once,\nnever once per artifact. Optional when the operator supplies no complete transaction.",
         "required": [
           "to",
           "value",
@@ -3821,7 +3821,7 @@
             "description": "Pagination cursor."
           }
         },
-        "description": "Request to list historical withdrawal events.",
+        "description": "Request to list historical withdrawal events. Rows without indexed block or timestamp metadata are omitted; continue with metadata.next_cursor even when a page is empty.",
         "title": "ListWithdrawalsRequest"
       },
       "ListWithdrawalsResponse": {
@@ -3832,7 +3832,7 @@
             "items": {
               "$ref": "#/components/schemas/Withdrawal"
             },
-            "description": "List of withdrawals."
+            "description": "Complete withdrawals with block and timestamp metadata; incomplete upstream rows are skipped."
           },
           "metadata": {
             "$ref": "#/components/schemas/PageInfo"

@@ -369,7 +369,8 @@ type OperationArtifact struct {
 	Pubkey string `protobuf:"bytes,1,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
 	// Deposit data (for PROVISION operations).
 	DepositData *DepositData `protobuf:"bytes,2,opt,name=deposit_data,json=depositData,proto3" json:"deposit_data,omitempty"`
-	// Deposit transaction details (for PROVISION operations, optional).
+	// Optional deposit transaction for PROVISION operations; see DepositTransaction
+	// for the shared-transaction rule.
 	DepositTransaction *DepositTransaction `protobuf:"bytes,3,opt,name=deposit_transaction,json=depositTransaction,proto3" json:"deposit_transaction,omitempty"`
 	// Exit message data (for EXIT operations).
 	ExitMessage   *ExitMessageData `protobuf:"bytes,4,opt,name=exit_message,json=exitMessage,proto3" json:"exit_message,omitempty"`
@@ -600,14 +601,18 @@ func (x *DepositData) GetForkVersion() string {
 	return ""
 }
 
-// DepositTransaction contains the deposit contract call data.
+// DepositTransaction contains the unchanged original deposit contract call.
+// Artifacts from the same provision response may carry identical transactions.
+// Its value is the full funding amount of all of them, not one validator's:
+// de-duplicate by (to, value, data) and submit each distinct transaction once,
+// never once per artifact. Optional when the operator supplies no complete transaction.
 type DepositTransaction struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Deposit contract address.
 	To string `protobuf:"bytes,1,opt,name=to,proto3" json:"to,omitempty"`
-	// Value in wei to send with the transaction.
+	// Full original batch value in wei to send with the transaction.
 	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	// Encoded calldata for the deposit.
+	// Encoded calldata from the original batch transaction.
 	Data          string `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

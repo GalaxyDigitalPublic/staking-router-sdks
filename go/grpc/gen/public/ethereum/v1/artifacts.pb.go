@@ -158,7 +158,8 @@ type DepositArtifact struct {
 	Pubkey string `protobuf:"bytes,1,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
 	// Deposit data.
 	DepositData *DepositData `protobuf:"bytes,2,opt,name=deposit_data,json=depositData,proto3" json:"deposit_data,omitempty"`
-	// Deposit transaction details.
+	// Optional original deposit transaction; see DepositTransaction for the
+	// shared-transaction rule.
 	DepositTransaction *DepositTransaction `protobuf:"bytes,3,opt,name=deposit_transaction,json=depositTransaction,proto3" json:"deposit_transaction,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
