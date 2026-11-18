@@ -1,6 +1,6 @@
 module github.com/GalaxyDigitalPublic/staking-router-sdks/go/grpc
 
-go 1.26.10
+go 1.26.11
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0

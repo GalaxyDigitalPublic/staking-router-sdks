@@ -1,6 +1,6 @@
 module github.com/GalaxyDigitalPublic/staking-router-sdks/go/rest
 
-go 1.26.10
+go 1.26.11
 
 require github.com/oapi-codegen/runtime v1.4.0
 
